@@ -13,7 +13,8 @@ import {
   TrendingUp,
   BrainCircuit,
   Zap,
-  Scale
+  Scale,
+  Radio
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { analyzeSpatialTrends } from '../services/geminiService';
@@ -51,11 +52,11 @@ const Dashboard: React.FC = () => {
         </div>
         <div className="flex items-center gap-3">
           <Link 
-            to={`/${AppRoute.GOVERNANCE}`}
-            className="flex items-center gap-2 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 px-5 py-2.5 rounded-xl font-bold transition-all text-sm hover:bg-indigo-600 hover:text-white"
+            to={`/${AppRoute.BEACON}`}
+            className="flex items-center gap-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 px-5 py-2.5 rounded-xl font-bold transition-all text-sm hover:bg-blue-600 hover:text-white"
           >
-            <Scale size={16} />
-            Governance Active
+            <Radio size={16} />
+            Beacon Transmitting
           </Link>
           <button 
             onClick={refreshInsight}

@@ -4,15 +4,16 @@ export interface SpatialNode {
   lat: number;
   lng: number;
   intensity: number;
-  status: 'active' | 'syncing' | 'offline' | 'threat';
+  status: 'active' | 'syncing' | 'offline' | 'threat' | 'discovered' | 'unregistered';
   label: string;
-  encryption: 'AES-256' | 'Quantum-Resistant' | 'P2P-Layer';
+  encryption: 'AES-256' | 'Quantum-Resistant' | 'P2P-Layer' | 'None';
+  discoveredAt?: number;
 }
 
 export interface VerificationTest {
   id: string;
   name: string;
-  category: 'Spatial' | 'Encryption' | 'Network' | 'Identity';
+  category: 'Spatial' | 'Encryption' | 'Network' | 'Identity' | 'Beacon';
   status: 'idle' | 'running' | 'passed' | 'failed';
   result?: string;
   lastRun?: string;
@@ -35,5 +36,6 @@ export enum AppRoute {
   SECURITY = 'security',
   VERIFY = 'verify',
   GOVERNANCE = 'governance',
-  ATLAS = 'atlas'
+  ATLAS = 'atlas',
+  BEACON = 'beacon'
 }

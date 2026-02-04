@@ -6,9 +6,7 @@
 
 **SovereignMap** is the backbone of decentralized spatial awareness mapping and digital identity expansion. It is a next-generation protocol designed to facilitate digital sovereign mapping across all devices capable of spatial awareness, transforming raw environmental data into a self-sustaining intelligence mesh.
 
-<img width="1024" height="1024" alt="image" src="https://github.com/user-attachments/assets/84f1fd89-0776-497d-939f-49c21034f07e" />
-
-
+---
 
 ## 🌐 Vision
 

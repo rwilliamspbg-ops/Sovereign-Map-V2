@@ -16,7 +16,8 @@ import {
   Map,
   Mic,
   Activity,
-  ChevronDown
+  ChevronDown,
+  Radio
 } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import NetworkView from './components/NetworkView';
@@ -27,6 +28,7 @@ import VerificationHub from './components/VerificationHub';
 import GovernanceCore from './components/GovernanceCore';
 import AtlasView from './components/AtlasView';
 import VoiceTerminal from './components/VoiceTerminal';
+import BeaconTerminal from './components/BeaconTerminal';
 import { AppRoute } from './types';
 
 const Navigation = ({ onVoiceToggle }: { onVoiceToggle: () => void }) => {
@@ -38,6 +40,7 @@ const Navigation = ({ onVoiceToggle }: { onVoiceToggle: () => void }) => {
 
   const navItems = [
     { label: 'Intelligence', icon: <LayoutDashboard size={20} />, path: AppRoute.DASHBOARD },
+    { label: 'Active Beacon', icon: <Radio size={20} />, path: AppRoute.BEACON },
     { label: 'Neural Atlas', icon: <Map size={20} />, path: AppRoute.ATLAS },
     { label: 'Governance', icon: <Scale size={20} />, path: AppRoute.GOVERNANCE },
     { label: 'Spatial Mesh', icon: <Network size={20} />, path: AppRoute.NETWORK },
@@ -166,6 +169,7 @@ function App() {
               <Route path="/verify" element={<VerificationHub />} />
               <Route path="/governance" element={<GovernanceCore />} />
               <Route path="/atlas" element={<AtlasView />} />
+              <Route path="/beacon" element={<BeaconTerminal />} />
             </Routes>
           </div>
         </main>

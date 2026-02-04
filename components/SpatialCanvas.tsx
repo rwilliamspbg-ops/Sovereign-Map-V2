@@ -1,142 +1,162 @@
 
 import React, { useRef, useEffect } from 'react';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 
 const SpatialCanvas: React.FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!containerRef.current) return;
 
-    let animationFrameId: number;
-    let width = canvas.offsetWidth;
-    let height = canvas.offsetHeight;
+    // --- SETUP SCENE ---
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x020617, 0.002);
 
-    canvas.width = width;
-    canvas.height = height;
+    const camera = new THREE.PerspectiveCamera(75, containerRef.current.clientWidth / containerRef.current.clientHeight, 0.1, 2000);
+    camera.position.set(200, 150, 400);
 
-    const points: { x: number; y: number; vx: number; vy: number; size: number; secure: boolean; pulse: number }[] = [];
-    const numPoints = 85;
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
+    containerRef.current.appendChild(renderer.domElement);
 
-    for (let i = 0; i < numPoints; i++) {
-      points.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: (Math.random() - 0.5) * 0.3,
-        size: Math.random() * 2 + 1,
-        secure: Math.random() > 0.8,
-        pulse: Math.random() * Math.PI * 2
-      });
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.rotateSpeed = 0.5;
+    controls.zoomSpeed = 1.2;
+    controls.maxDistance = 800;
+    controls.minDistance = 50;
+
+    // --- GRID FLOOR ---
+    const gridHelper = new THREE.GridHelper(2000, 50, 0x1e293b, 0x0f172a);
+    gridHelper.position.y = -50;
+    scene.add(gridHelper);
+
+    // --- MESH NODES ---
+    const pointCount = 120;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(pointCount * 3);
+    const colors = new Float32Array(pointCount * 3);
+    const sizes = new Float32Array(pointCount);
+
+    const nodes: THREE.Vector3[] = [];
+
+    for (let i = 0; i < pointCount; i++) {
+      const x = (Math.random() - 0.5) * 800;
+      const y = (Math.random() - 0.2) * 400;
+      const z = (Math.random() - 0.5) * 800;
+      
+      nodes.push(new THREE.Vector3(x, y, z));
+      
+      positions[i * 3] = x;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = z;
+
+      // Color variation (Blue to Purple)
+      const r = 0.2 + Math.random() * 0.2;
+      const g = 0.4 + Math.random() * 0.2;
+      const b = 0.8 + Math.random() * 0.2;
+      
+      colors[i * 3] = r;
+      colors[i * 3 + 1] = g;
+      colors[i * 3 + 2] = b;
+
+      sizes[i] = Math.random() * 15 + 5;
     }
 
-    const render = (time: number) => {
-      ctx.clearRect(0, 0, width, height);
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+    const sprite = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/disc.png');
+    const material = new THREE.PointsMaterial({
+      size: 4,
+      vertexColors: true,
+      map: sprite,
+      transparent: true,
+      alphaTest: 0.5,
+      blending: THREE.AdditiveBlending,
+    });
+
+    const points = new THREE.Points(geometry, material);
+    scene.add(points);
+
+    // --- CONNECTIONS (LINES) ---
+    const lineMaterial = new THREE.LineBasicMaterial({ 
+      color: 0x3b82f6, 
+      transparent: true, 
+      opacity: 0.15,
+      blending: THREE.AdditiveBlending 
+    });
+
+    const lineGeometry = new THREE.BufferGeometry();
+    const linePositions: number[] = [];
+
+    // Simple nearest neighbor connections
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        if (nodes[i].distanceTo(nodes[j]) < 180) {
+          linePositions.push(nodes[i].x, nodes[i].y, nodes[i].z);
+          linePositions.push(nodes[j].x, nodes[j].y, nodes[j].z);
+        }
+      }
+    }
+    lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
+    const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+    scene.add(lines);
+
+    // --- ANIMATION ---
+    let frameId: number;
+    const animate = () => {
+      frameId = requestAnimationFrame(animate);
       
-      // Topographic "Signal Density" Gradient Background
-      const gradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width/1.5);
-      gradient.addColorStop(0, 'rgba(15, 23, 42, 0)');
-      gradient.addColorStop(1, 'rgba(2, 6, 23, 0.4)');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, width, height);
+      // Gentle rotation for background movement
+      points.rotation.y += 0.0005;
+      lines.rotation.y += 0.0005;
 
-      // Draw Grid with slight depth
-      ctx.strokeStyle = 'rgba(30, 41, 59, 0.3)';
-      ctx.lineWidth = 1;
-      const step = 60;
-      for (let x = (time * 0.01) % step; x < width; x += step) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke();
+      // Pulse sizes
+      const time = Date.now() * 0.002;
+      const sizesArray = geometry.attributes.size.array as Float32Array;
+      for (let i = 0; i < pointCount; i++) {
+        sizesArray[i] = (Math.sin(time + i) + 1.5) * 4;
       }
-      for (let y = (time * 0.01) % step; y < height; y += step) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
-      }
+      geometry.attributes.size.needsUpdate = true;
 
-      // Draw Connections (Neural Mesh Fibers)
-      for (let i = 0; i < points.length; i++) {
-        for (let j = i + 1; j < points.length; j++) {
-          const dx = points[i].x - points[j].x;
-          const dy = points[i].y - points[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < 160) {
-            const isSecure = points[i].secure && points[j].secure;
-            const opacity = (1 - dist / 160) * 0.3;
-            
-            ctx.strokeStyle = isSecure 
-              ? `rgba(139, 92, 246, ${opacity * 2})` 
-              : `rgba(59, 130, 246, ${opacity})`;
-            
-            ctx.setLineDash(isSecure ? [2, 6] : []);
-            ctx.lineWidth = isSecure ? 1.2 : 0.8;
-
-            ctx.beginPath();
-            ctx.moveTo(points[i].x, points[i].y);
-            ctx.lineTo(points[j].x, points[j].y);
-            ctx.stroke();
-          }
-        }
-      }
-      ctx.setLineDash([]);
-
-      // Draw Nodes (Sovereign Terminals)
-      points.forEach(p => {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.pulse += 0.02;
-
-        if (p.x < 0 || p.x > width) p.vx *= -1;
-        if (p.y < 0 || p.y > height) p.vy *= -1;
-
-        const pulseScale = 1 + Math.sin(p.pulse) * 0.2;
-        
-        if (p.secure) {
-          ctx.fillStyle = '#a855f7';
-          ctx.shadowBlur = 20;
-          ctx.shadowColor = 'rgba(168, 85, 247, 0.8)';
-        } else {
-          ctx.fillStyle = '#3b82f6';
-          ctx.shadowBlur = 12;
-          ctx.shadowColor = 'rgba(59, 130, 246, 0.6)';
-        }
-        
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * pulseScale, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-
-        // "Satellite" orbit around secure nodes
-        if (p.secure) {
-          ctx.strokeStyle = 'rgba(168, 85, 247, 0.2)';
-          ctx.lineWidth = 0.5;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, 10 * pulseScale, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-      });
-
-      animationFrameId = requestAnimationFrame(render);
+      controls.update();
+      renderer.render(scene, camera);
     };
 
-    render(0);
+    animate();
 
+    // --- CLEANUP ---
     const handleResize = () => {
-      width = canvas.offsetWidth;
-      height = canvas.offsetHeight;
-      canvas.width = width;
-      canvas.height = height;
+      if (!containerRef.current) return;
+      camera.aspect = containerRef.current.clientWidth / containerRef.current.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
     };
 
     window.addEventListener('resize', handleResize);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(frameId);
+      renderer.dispose();
+      if (containerRef.current) {
+        containerRef.current.removeChild(renderer.domElement);
+      }
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="w-full h-full block" />;
+  return (
+    <div ref={containerRef} className="w-full h-full relative group cursor-move">
+      <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-950/60 backdrop-blur px-3 py-1.5 rounded-lg border border-white/5 pointer-events-none">
+        <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Orbit: Left Click | Zoom: Scroll | Pan: Right Click</p>
+      </div>
+    </div>
+  );
 };
 
 export default SpatialCanvas;
