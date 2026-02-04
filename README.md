@@ -14,23 +14,29 @@ In an era of centralized surveillance, SovereignMap returns spatial intelligence
 
 ## 🚀 Key Features
 
-### 1. Neural Atlas (Semantic Topography)
-Powered by `gemini-3-flash-preview`, the Atlas transforms raw point-cloud data and GPS telemetry into human-readable semantic intelligence. It identifies mesh density bottlenecks and synthesizes topological reports for sovereign sectors.
+### 1. Neural Signal HUD (Real-Time Telemetry)
+The Network Registry now features a **Neural Signal HUD** for every node. This includes:
+- **Reactive Waveforms**: Real-time SVG/Canvas visualizations of node latency and spectral density.
+- **Signal Jitter Analysis**: Precise monitoring of packet loss and temporal drift.
+- **Dynamic Spectral Bars**: Flickering visual indicators of connection strength and neural link health.
 
-### 2. Autonomous Governance Core
-A self-sustaining economic layer that uses AI-driven Network Orchestration (ANO). The mesh automatically generates optimization proposals, adjusting staking rewards, slashing rates, and sync periods based on real-time network health.
+### 2. Deep Threat Analysis (Gemini-Powered)
+The Security Ops center is equipped with a **Deep Threat Scan** utility. Powered by `gemini-3-flash-preview`, it:
+- Aggregates real-time network logs and firewall intercepts.
+- Identifies coordinated attack patterns (Sybil, Eclipse, Routing manipulation).
+- Generates tactical mitigation strategies and autonomous defense maneuvers.
 
-### 3. Neural Voice Link (Live API)
+### 3. Advanced Spatial Rendering
+Our 3D engine has been upgraded for maximum immersion:
+- **Ambient Occlusion (SSAO)**: Enhanced depth and realism using Screen Space Ambient Occlusion.
+- **Volumetric Fog & Lighting**: Deep atmospheric immersion with dynamic point-light pulses synchronized with Lidar scans.
+- **Crystalline Mesh Nodes**: High-fidelity Physical Materials for all network entities.
+
+### 4. Neural Voice Link (Live API)
 A low-latency, real-time audio interface utilizing `gemini-2.5-flash-native-audio-preview-12-2025`. Operators can query the mesh hands-free during spatial scanning, receiving tactical updates directly from the Mesh Oracle.
 
-### 4. Security Perimeter
-Quantum-resistant encryption layers and Decentralized Identity (DID) handshakes ensure that every node in the mesh is verified. Features include:
-- **RSA-Q 8k Layer** encryption.
-- **Pattern Recognition Sentry** for sybil attack detection.
-- **Master Key Rotation** via automated neural protocols.
-
-### 5. Verification Hub
-A comprehensive audit suite that validates spatial consistency, P2P latency, and consensus integrity. Results are synthesized into high-level intelligence reports for network transparency.
+### 5. Autonomous Governance Core
+A self-sustaining economic layer that uses AI-driven Network Orchestration (ANO). The mesh automatically generates optimization proposals, adjusting staking rewards, slashing rates, and sync periods based on real-time network health.
 
 ---
 
@@ -39,10 +45,10 @@ A comprehensive audit suite that validates spatial consistency, P2P latency, and
 - **Framework**: React 19 / TypeScript
 - **AI Orchestration**: Google Gemini SDK (`@google/genai`)
   - **Gemini 3 Pro**: High-level security & spatial analysis.
-  - **Gemini 3 Flash**: Rapid semantic synthesis and governance.
+  - **Gemini 3 Flash**: Rapid semantic synthesis and deep threat detection.
   - **Gemini 2.5 Live**: Real-time voice interaction.
+- **3D Engine**: Three.js with EffectComposer (SSAO, RenderPass)
 - **UI/UX**: Tailwind CSS / Lucide React / Glassmorphism Design Language
-- **Visualization**: Custom HTML5 Canvas Spatial Engine
 - **Routing**: React Router (Hash Mode for decentralized deployment)
 
 ---
@@ -61,22 +67,8 @@ git clone https://github.com/rwilliamspbg-ops/Sovereign-Map.git
 # Navigate to directory
 cd Sovereign-Map
 
-# Install dependencies (using esm.sh imports)
 # No build step required for modern esm-module browsers
 ```
-
-### Deployment Rule
-For production environments, ensure the `requestFramePermissions` for **Camera, Microphone, and Geolocation** are handled by the host container to enable full spatial scanning and Voice Link capabilities.
-
----
-
-## 🗺 Roadmap
-
-- [x] **Phase 1: Foundation** - Basic Mesh visualization and Identity.
-- [x] **Phase 2: Intelligence** - Integration of Gemini Content Analysis.
-- [x] **Phase 3: Autonomy** - Governance Core and Economic layers.
-- [x] **Phase 4: Release** - Real-time Voice Link (v1.0 Production Ready).
-- [ ] **Phase 5: Expansion** - Cross-chain spatial asset bridging and VEO video-based spatial reconstruction.
 
 ---
 
@@ -88,12 +80,6 @@ We welcome architects, cryptographers, and neural engineers to join the mesh.
 3. Commit your Changes (`git commit -m 'Add some SovereignCapability'`).
 4. Push to the Branch (`git push origin feature/SovereignUpdate`).
 5. Open a Pull Request.
-
----
-
-## ⚖ License
-
-Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
