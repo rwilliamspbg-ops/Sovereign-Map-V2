@@ -10,6 +10,21 @@ export interface SpatialNode {
   discoveredAt?: number;
 }
 
+export interface KineticEntity {
+  id: string;
+  type: 'Drone' | 'UGV' | 'Humanoid' | 'Satellite';
+  status: 'Idle' | 'In-Flight' | 'Scanning' | 'Charging' | 'Emergency';
+  battery: number;
+  position: { x: number; y: number; z: number };
+  target?: { x: number; y: number; z: number };
+}
+
+export interface FlightCorridor {
+  id: string;
+  points: { x: number; y: number; z: number }[];
+  clearance: number; // 0-100% based on mesh density
+}
+
 export interface VerificationTest {
   id: string;
   name: string;
@@ -37,5 +52,6 @@ export enum AppRoute {
   VERIFY = 'verify',
   GOVERNANCE = 'governance',
   ATLAS = 'atlas',
-  BEACON = 'beacon'
+  BEACON = 'beacon',
+  COMMAND = 'command'
 }

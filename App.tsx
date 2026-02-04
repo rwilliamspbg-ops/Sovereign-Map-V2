@@ -17,7 +17,8 @@ import {
   Mic,
   Activity,
   ChevronDown,
-  Radio
+  Radio,
+  Navigation as NavIcon
 } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import NetworkView from './components/NetworkView';
@@ -29,6 +30,7 @@ import GovernanceCore from './components/GovernanceCore';
 import AtlasView from './components/AtlasView';
 import VoiceTerminal from './components/VoiceTerminal';
 import BeaconTerminal from './components/BeaconTerminal';
+import AutonomousCommand from './components/AutonomousCommand';
 import { AppRoute } from './types';
 
 const Navigation = ({ onVoiceToggle }: { onVoiceToggle: () => void }) => {
@@ -40,6 +42,7 @@ const Navigation = ({ onVoiceToggle }: { onVoiceToggle: () => void }) => {
 
   const navItems = [
     { label: 'Intelligence', icon: <LayoutDashboard size={20} />, path: AppRoute.DASHBOARD },
+    { label: 'Command Hub', icon: <NavIcon size={20} />, path: AppRoute.COMMAND },
     { label: 'Active Beacon', icon: <Radio size={20} />, path: AppRoute.BEACON },
     { label: 'Neural Atlas', icon: <Map size={20} />, path: AppRoute.ATLAS },
     { label: 'Governance', icon: <Scale size={20} />, path: AppRoute.GOVERNANCE },
@@ -64,7 +67,6 @@ const Navigation = ({ onVoiceToggle }: { onVoiceToggle: () => void }) => {
           </div>
         </div>
 
-        {/* Network Toggle */}
         <div className="mb-6 px-2">
            <button 
             onClick={() => setNetwork(prev => prev === 'MAINNET' ? 'TESTNET' : 'MAINNET')}
@@ -170,6 +172,7 @@ function App() {
               <Route path="/governance" element={<GovernanceCore />} />
               <Route path="/atlas" element={<AtlasView />} />
               <Route path="/beacon" element={<BeaconTerminal />} />
+              <Route path="/command" element={<AutonomousCommand />} />
             </Routes>
           </div>
         </main>
