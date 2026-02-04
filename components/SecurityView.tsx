@@ -15,9 +15,16 @@ import {
   Crosshair,
   Shield,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Minimize2,
+  Share2,
+  Ghost,
+  Cpu,
+  Search,
+  ChevronRight,
+  ShieldQuestion
 } from 'lucide-react';
-import { analyzeThreatVector } from '../services/geminiService';
+import { analyzeThreatVector, determineDefenseManeuver } from '../services/geminiService';
 
 const SecurityView: React.FC = () => {
   const [threatLevel, setThreatLevel] = useState(12);
@@ -25,53 +32,116 @@ const SecurityView: React.FC = () => {
   const [continuousProtection, setContinuousProtection] = useState(true);
   const [logs, setLogs] = useState<any[]>([]);
   const [firewallBlocks, setFirewallBlocks] = useState<any[]>([]);
-  const [aiAdvisory, setAiAdvisory] = useState<string>("Analyzing network entropy for potential zero-day vectors...");
+  const [aiAdvisory, setAiAdvisory] = useState<string>("Initializing neural defense monitoring. Awaiting network telemetry...");
   const [loadingAdvisory, setLoadingAdvisory] = useState(false);
+  const [activeManeuvers, setActiveManeuvers] = useState<string[]>([]);
+  const [isDeepScanning, setIsDeepScanning] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
+      const logTypes = [
+        { type: 'encryption_rotation', status: 'SUCCESS', weight: 0.6 },
+        { type: 'handshake_verified', status: 'SUCCESS', weight: 0.2 },
+        { type: 'intrusion_blocked', status: 'SUCCESS', weight: 0.1 },
+        { type: 'unusual_peer_density', status: 'WARNING', weight: 0.05 },
+        { type: 'latency_spike_detected', status: 'WARNING', weight: 0.05 }
+      ];
+
+      const r = Math.random();
+      let selectedType = logTypes[0];
+      let sum = 0;
+      for (const t of logTypes) {
+        sum += t.weight;
+        if (r <= sum) {
+          selectedType = t;
+          break;
+        }
+      }
+
       const newLog = {
-        id: Math.random().toString(36).substr(2, 9),
-        type: Math.random() > 0.8 ? 'intrusion_blocked' : 'encryption_rotation',
+        id: Math.random().toString(36).substr(2, 9).toUpperCase(),
+        type: selectedType.type,
         node: `NODE-${Math.floor(Math.random() * 999)}`,
         timestamp: new Date().toLocaleTimeString(),
-        status: 'SUCCESS'
+        status: selectedType.status,
+        payloadSize: `${(Math.random() * 100).toFixed(2)} KB`,
+        origin: `SEC-${Math.floor(Math.random() * 100)}`
       };
-      setLogs(prev => [newLog, ...prev].slice(0, 10));
 
-      if (Math.random() > 0.7) {
+      setLogs(prev => [newLog, ...prev].slice(0, 20));
+
+      if (selectedType.type === 'intrusion_blocked' || Math.random() > 0.8) {
         const block = {
           id: `BLOCK-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
-          reason: ['Protocol Mismatch', 'Unverified DID', 'Spatial Drift Limit Exceeded', 'Excessive Handshake'][Math.floor(Math.random() * 4)],
-          time: new Date().toLocaleTimeString()
+          reason: ['Protocol Mismatch', 'Unverified DID', 'Spatial Drift Limit Exceeded', 'Excessive Handshake', 'Sync Divergence'][Math.floor(Math.random() * 5)],
+          time: new Date().toLocaleTimeString(),
+          severity: Math.random() > 0.7 ? 'HIGH' : 'MEDIUM'
         };
-        setFirewallBlocks(prev => [block, ...prev].slice(0, 5));
+        setFirewallBlocks(prev => [block, ...prev].slice(0, 10));
+        
+        if (block.severity === 'HIGH' && threatLevel < 80) {
+          setThreatLevel(prev => Math.min(100, prev + 5));
+        }
       }
-    }, 4000);
+    }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [threatLevel]);
 
-  useEffect(() => {
-    if (continuousProtection) {
-      refreshAdvisory();
-      const advisoryInterval = setInterval(refreshAdvisory, 15000);
-      return () => clearInterval(advisoryInterval);
-    }
-  }, [continuousProtection]);
-
-  const refreshAdvisory = async () => {
+  const triggerAutoDefense = async (vector: string) => {
     setLoadingAdvisory(true);
-    const result = await analyzeThreatVector(logs);
-    if (result) setAiAdvisory(result);
+    const recommendation = await determineDefenseManeuver(vector, threatLevel);
+    if (recommendation) {
+      setAiAdvisory(`AUTONOMOUS DEFENSE TRIGGERED: ${recommendation}`);
+      if (recommendation.toLowerCase().includes('isolation')) setActiveManeuvers(p => [...p, 'Isolation']);
+      if (recommendation.toLowerCase().includes('scrambling')) setActiveManeuvers(p => [...p, 'Signal Scrambling']);
+    }
     setLoadingAdvisory(false);
+    setThreatLevel(prev => Math.min(100, prev + 15));
+  };
+
+  const handleDeepScan = async () => {
+    setIsDeepScanning(true);
+    setLoadingAdvisory(true);
+    setAiAdvisory("Performing deep packet inspection and heuristic log analysis...");
+    
+    // Combine logs and blocks for a richer analysis context
+    const analysisContext = {
+      recentLogs: logs,
+      firewallBlocks: firewallBlocks,
+      currentThreatLevel: threatLevel,
+      activeManeuvers: activeManeuvers
+    };
+
+    try {
+      const result = await analyzeThreatVector(analysisContext as any);
+      if (result) {
+        setAiAdvisory(result);
+        // If Gemini detects a specific serious threat, we might react
+        if (result.toLowerCase().includes("attack") || result.toLowerCase().includes("sybil") || result.toLowerCase().includes("eclipse")) {
+          setThreatLevel(prev => Math.min(100, prev + 10));
+        }
+      }
+    } catch (error) {
+      setAiAdvisory("Neural link error during deep scan. Falling back to local heuristic monitoring.");
+    } finally {
+      setLoadingAdvisory(false);
+      setIsDeepScanning(false);
+    }
   };
 
   const rotateKeys = () => {
     setIsRotating(true);
+    setAiAdvisory("Initiating master key rotation across all mesh nodes. Synchronizing new entropy seeds...");
     setTimeout(() => {
       setIsRotating(false);
-      setThreatLevel(prev => Math.max(8, prev - 5));
-    }, 2000);
+      setThreatLevel(prev => Math.max(8, prev - 10));
+      setAiAdvisory("Master key rotation successful. Network integrity re-established.");
+    }, 2500);
+  };
+
+  const clearManeuver = (name: string) => {
+    setActiveManeuvers(prev => prev.filter(m => m !== name));
+    setThreatLevel(prev => Math.max(12, prev - 10));
   };
 
   const getThreatColor = () => {
@@ -84,12 +154,12 @@ const SecurityView: React.FC = () => {
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-500 pb-20">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white mb-0.5">Security Operations Center</h2>
+          <h2 className="text-3xl font-black tracking-tighter text-white mb-1 uppercase">Security Ops</h2>
           <div className="flex items-center gap-3">
             <p className="text-slate-400 text-xs italic">Quantum-shielding active across mesh defense.</p>
             <div className="flex items-center gap-2 ml-2">
               <span className={`w-2 h-2 rounded-full ${continuousProtection ? 'bg-green-500 animate-pulse' : 'bg-slate-600'}`}></span>
-              <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Continuous Protection</span>
+              <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Auto-Mitigation</span>
               <button 
                 onClick={() => setContinuousProtection(!continuousProtection)}
                 className={`w-8 h-4 rounded-full transition-colors ${continuousProtection ? 'bg-blue-600' : 'bg-slate-800'}`}
@@ -99,29 +169,39 @@ const SecurityView: React.FC = () => {
             </div>
           </div>
         </div>
-        <button 
-          onClick={rotateKeys}
-          disabled={isRotating}
-          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg text-sm active:scale-95 disabled:opacity-50"
-        >
-          <RefreshCw size={16} className={isRotating ? 'animate-spin' : ''} />
-          {isRotating ? 'Rotating Master Keys...' : 'Rotate Master Keys'}
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={handleDeepScan}
+            disabled={isDeepScanning || loadingAdvisory}
+            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-6 py-2.5 rounded-xl font-bold transition-all border border-white/5 text-sm active:scale-95 disabled:opacity-50"
+          >
+            {isDeepScanning ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+            Deep Threat Scan
+          </button>
+          <button 
+            onClick={rotateKeys}
+            disabled={isRotating}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg text-sm active:scale-95 disabled:opacity-50"
+          >
+            <RefreshCw size={16} className={isRotating ? 'animate-spin' : ''} />
+            {isRotating ? 'Rotating Keys...' : 'Rotate Keys'}
+          </button>
+        </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Threat Gauge & Intelligence Advisory */}
         <div className="lg:col-span-4 flex flex-col gap-6">
-          <div className="glass-panel rounded-3xl p-6 flex flex-col items-center justify-center text-center relative overflow-hidden flex-1 min-h-[300px]">
-            {continuousProtection && (
-               <div className="absolute inset-0 border-2 border-blue-500/10 rounded-3xl animate-[pulse_3s_infinite] pointer-events-none"></div>
+          <div className="glass-panel rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-center relative overflow-hidden flex-1 min-h-[350px] hud-border">
+            {activeManeuvers.length > 0 && (
+               <div className="absolute inset-0 border-4 border-red-500/20 rounded-[2.5rem] animate-[pulse_2s_infinite] pointer-events-none"></div>
             )}
-            <div className="relative w-40 h-40 md:w-48 md:h-48 mb-4">
+            <div className="relative w-48 h-48 mb-6">
               <svg className="w-full h-full transform -rotate-90">
-                <circle cx="50%" cy="50%" r="42%" stroke="rgba(255,255,255,0.05)" strokeWidth="12" fill="transparent" />
+                <circle cx="50%" cy="50%" r="42%" stroke="rgba(255,255,255,0.03)" strokeWidth="14" fill="transparent" />
                 <circle
                   cx="50%" cy="50%" r="42%"
-                  stroke="currentColor" strokeWidth="12" fill="transparent"
+                  stroke="currentColor" strokeWidth="14" fill="transparent"
                   strokeDasharray="264"
                   strokeDashoffset={264 * (1 - threatLevel / 100)}
                   className={`${getThreatColor()} transition-all duration-1000 ease-out`}
@@ -129,146 +209,151 @@ const SecurityView: React.FC = () => {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className={`text-3xl font-black ${getThreatColor()}`}>{threatLevel}%</span>
-                <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Threat Index</span>
+                <span className={`text-4xl font-black font-mono tracking-tighter ${getThreatColor()}`}>{threatLevel}%</span>
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Threat Index</span>
               </div>
             </div>
-            <div className="bg-green-500/10 text-green-400 px-3 py-1 rounded-full border border-green-500/20 text-[10px] font-bold inline-flex items-center gap-1.5">
-              <ShieldCheck size={12} /> {threatLevel < 20 ? 'Optimal Integrity' : 'Elevated Alert'}
+            <div className={`px-4 py-2 rounded-xl border text-xs font-black uppercase tracking-widest inline-flex items-center gap-2 ${threatLevel > 50 ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20'}`}>
+              <ShieldCheck size={14} /> {threatLevel < 20 ? 'Optimal' : threatLevel < 50 ? 'Elevated' : 'Defensive Action'}
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-5 flex flex-col gap-3 bg-blue-950/10 border-blue-500/10 h-48">
-            <div className="flex items-center justify-between mb-1">
-              <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                <Shield size={14} /> AI Advisory
-              </h4>
-              {loadingAdvisory && <Loader2 size={10} className="animate-spin text-blue-400" />}
-            </div>
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 bg-black/20 rounded-xl border border-white/5">
-              <p className="text-[10px] text-slate-300 leading-relaxed font-medium italic">
-                {loadingAdvisory ? "Decoding neural telemetry..." : aiAdvisory}
-              </p>
-            </div>
+          <div className="glass-panel rounded-[2.5rem] p-6 flex flex-col gap-4 bg-slate-950/40 hud-border">
+             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <Zap size={14} className="text-amber-400" /> Active Maneuvers
+             </h4>
+             <div className="space-y-2">
+                {[
+                  { name: 'Isolation', icon: <Minimize2 size={12} />, desc: 'Node Sandbox active' },
+                  { name: 'Signal Scrambling', icon: <Ghost size={12} />, desc: 'FHSS decoy frequency' },
+                  { name: 'Consensus Migration', icon: <Share2 size={12} />, desc: 'Parallel L2 relocation' },
+                ].map((m) => (
+                  <button 
+                    key={m.name}
+                    onClick={() => activeManeuvers.includes(m.name) ? clearManeuver(m.name) : setActiveManeuvers(p => [...p, m.name])}
+                    className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                      activeManeuvers.includes(m.name) 
+                        ? 'bg-red-500/20 border-red-500/40 text-red-400 shadow-xl' 
+                        : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-xl ${activeManeuvers.includes(m.name) ? 'bg-red-500/20' : 'bg-slate-900'}`}>
+                        {m.icon}
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">{m.name}</p>
+                        <p className="text-[9px] text-slate-500 font-medium">{m.desc}</p>
+                      </div>
+                    </div>
+                    {activeManeuvers.includes(m.name) ? <Loader2 size={12} className="animate-spin" /> : <ChevronRight size={12} />}
+                  </button>
+                ))}
+             </div>
           </div>
         </div>
 
-        {/* Tactical Controls & Firewall */}
+        {/* Tactical Controls & Advisory */}
         <div className="lg:col-span-8 flex flex-col gap-6">
+          {/* Neural Advisory HUD */}
+          <div className="glass-panel rounded-[2.5rem] p-8 flex flex-col gap-4 bg-blue-950/10 border-blue-500/10 min-h-[180px] hud-border">
+            <div className="flex items-center justify-between">
+              <h4 className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
+                <Terminal size={16} /> Neural Defense Intelligence
+              </h4>
+              <div className="flex items-center gap-2">
+                 {loadingAdvisory && <span className="text-[9px] font-black text-blue-500 animate-pulse">ANALYZING...</span>}
+                 <ShieldQuestion size={14} className="text-blue-500/40" />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-black/60 rounded-3xl border border-white/5 font-mono text-xs shadow-inner">
+              <div className="flex gap-3">
+                 <span className="text-blue-500 font-bold shrink-0">ORACLE@SOVEREIGN:~$</span>
+                 <p className="text-slate-200 leading-relaxed font-medium">
+                    {loadingAdvisory ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 size={14} className="animate-spin" /> 
+                        Performing heuristic correlation on {logs.length} data points...
+                      </span>
+                    ) : aiAdvisory}
+                 </p>
+              </div>
+            </div>
+            {aiAdvisory.length > 100 && !loadingAdvisory && (
+               <div className="flex justify-end">
+                  <button className="text-[9px] font-black text-blue-400 uppercase tracking-widest hover:text-white transition-colors flex items-center gap-1">
+                     Export Mitigation Report <Share2 size={10} />
+                  </button>
+               </div>
+            )}
+          </div>
+
+          {/* Core Monitoring Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              { title: 'Neural Crypto', desc: 'RSA-Q 8k Layer', icon: <Lock size={20} />, status: 'ACTIVE', color: 'text-purple-400' },
-              { title: 'DID Handshake', desc: 'Sovereign Verified', icon: <Fingerprint size={20} />, status: 'SECURE', color: 'text-blue-400' },
-              { title: 'AI Sentry', desc: 'Pattern Recognition', icon: <ShieldAlert size={20} />, status: 'WATCHING', color: 'text-amber-400' },
-              { title: 'Adaptive Shield', desc: 'Autonomous Block', icon: <Radio size={20} />, status: continuousProtection ? 'ENABLED' : 'MANUAL', color: 'text-green-400' },
+              { title: 'Neural Crypto', desc: 'RSA-Q 8k Layer', icon: <Lock size={20} />, status: 'VERIFIED', color: 'text-purple-400' },
+              { title: 'DID Handshake', desc: 'Trust Level: High', icon: <Fingerprint size={20} />, status: 'SECURE', color: 'text-blue-400' },
+              { title: 'Sentry Pulse', desc: 'Deep Packet Inspection', icon: <Activity size={20} />, status: activeManeuvers.length > 0 ? 'ALERT' : 'NOMINAL', color: 'text-amber-400' },
+              { title: 'Auto-Block', desc: 'Adaptive Firewall', icon: <Radio size={20} />, status: continuousProtection ? 'ENABLED' : 'MANUAL', color: 'text-green-400' },
             ].map((item, i) => (
-              <div key={i} className="glass-panel p-5 rounded-2xl flex items-center justify-between group hover:bg-slate-900/40 transition-all border-white/5">
+              <div key={i} className="glass-panel p-6 rounded-[2rem] flex items-center justify-between group hover:bg-slate-900/40 transition-all border-white/5">
                 <div className="flex items-center gap-4">
-                  <div className={`p-3 bg-slate-900/60 rounded-xl ${item.color} shadow-lg`}>
+                  <div className={`p-3.5 bg-slate-900/60 rounded-2xl ${item.color} shadow-lg group-hover:scale-110 transition-transform`}>
                     {item.icon}
                   </div>
                   <div>
-                    <h4 className="font-bold text-white text-sm">{item.title}</h4>
-                    <p className="text-[10px] text-slate-500 font-medium">{item.desc}</p>
+                    <h4 className="font-black text-white text-sm uppercase tracking-tight">{item.title}</h4>
+                    <p className="text-[10px] text-slate-500 font-bold">{item.desc}</p>
                   </div>
                 </div>
-                <span className={`text-[9px] font-black tracking-widest px-2 py-0.5 rounded-lg bg-slate-900 border border-white/5 ${item.color}`}>
+                <span className={`text-[9px] font-black tracking-widest px-2.5 py-1 rounded-lg bg-slate-900 border border-white/5 ${item.color}`}>
                   {item.status}
                 </span>
               </div>
             ))}
           </div>
 
-          <div className="glass-panel flex-1 rounded-3xl p-6 flex flex-col bg-red-950/5 border-red-500/10 overflow-hidden">
-             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[10px] font-black text-red-400 uppercase tracking-widest flex items-center gap-2">
-                  <ShieldAlert size={16} /> Adaptive Firewall Intercepts
+          {/* Firewall Logs */}
+          <div className="glass-panel flex-1 rounded-[2.5rem] p-8 flex flex-col bg-red-950/5 border-red-500/10 overflow-hidden min-h-[300px] hud-border">
+             <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xs font-black text-red-400 uppercase tracking-widest flex items-center gap-2">
+                  <ShieldAlert size={18} /> Firewall Intercepts
                 </h3>
-                <span className="text-[8px] font-mono text-slate-600">FILTER: ROGUE_SIGNALS</span>
+                <div className="flex items-center gap-4">
+                  <span className="text-[10px] font-mono text-slate-600">CAPACITY: 2.4 TB/S</span>
+                  <div className="flex gap-1 h-3 items-center">
+                    {[0.2, 0.4, 0.8, 0.5, 0.3].map((h, i) => (
+                      <div key={i} className="w-1 bg-red-500/30 rounded-full" style={{ height: `${h * 100}%` }}></div>
+                    ))}
+                  </div>
+                </div>
              </div>
-             <div className="flex-1 space-y-2 overflow-y-auto no-scrollbar">
+             <div className="flex-1 space-y-2 overflow-y-auto no-scrollbar pr-2">
                 {firewallBlocks.map((block, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 bg-red-600/5 border border-red-500/10 rounded-xl animate-in slide-in-from-right-2">
-                    <div className="flex items-center gap-3">
-                      <div className="p-1.5 bg-red-500/10 text-red-500 rounded-lg"><Crosshair size={12}/></div>
+                  <div key={i} className="flex items-center justify-between p-4 bg-red-600/5 border border-red-500/10 rounded-2xl animate-in slide-in-from-right-2 hover:bg-red-600/10 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 bg-red-500/10 text-red-500 rounded-xl"><Crosshair size={14}/></div>
                       <div>
-                        <p className="text-[10px] font-black text-white">{block.id}</p>
-                        <p className="text-[8px] text-slate-500 uppercase">{block.reason}</p>
+                        <div className="flex items-center gap-2">
+                           <p className="text-[11px] font-black text-white">{block.id}</p>
+                           {block.severity === 'HIGH' && <span className="text-[7px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded">CRITICAL</span>}
+                        </div>
+                        <p className="text-[9px] text-slate-500 uppercase font-bold tracking-tight">{block.reason}</p>
                       </div>
                     </div>
-                    <span className="text-[9px] font-mono text-red-400/50">{block.time}</span>
+                    <span className="text-[10px] font-mono font-bold text-red-400/60">{block.time}</span>
                   </div>
                 ))}
                 {firewallBlocks.length === 0 && (
-                  <div className="h-full flex items-center justify-center opacity-20 italic text-[10px] text-slate-500 uppercase tracking-widest">
-                    No active incursions detected
+                  <div className="h-full flex flex-col items-center justify-center opacity-20 gap-3 grayscale">
+                    <ShieldCheck size={48} />
+                    <p className="italic text-[10px] text-slate-500 font-black uppercase tracking-widest">Awaiting sector incursions</p>
                   </div>
                 )}
              </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Logs & Integrity Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[350px]">
-        {/* Terminal Logs */}
-        <div className="glass-panel bg-black/40 rounded-3xl p-6 font-mono overflow-hidden flex flex-col h-full">
-          <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
-            <h3 className="text-[10px] font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
-              <Terminal size={12} className="text-blue-400" /> Tactical Log
-            </h3>
-            <div className="flex gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-red-500/20"></div>
-              <div className="w-2 h-2 rounded-full bg-green-500/20"></div>
-            </div>
-          </div>
-          <div className="space-y-2 text-[10px] overflow-y-auto custom-scrollbar flex-1">
-            {logs.map(log => (
-              <div key={log.id} className="flex gap-4 animate-in fade-in slide-in-from-left-2 items-center bg-white/5 p-1.5 rounded-lg">
-                <span className="text-slate-600 font-bold shrink-0">{log.timestamp}</span>
-                <span className={`font-black uppercase shrink-0 text-[8px] ${log.type === 'intrusion_blocked' ? 'text-red-400' : 'text-purple-400'}`}>
-                  {log.type.replace('_', ' ')}
-                </span>
-                <span className="text-slate-400 truncate text-[9px]">{log.node}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Spatial Integrity Grid */}
-        <div className="glass-panel rounded-3xl p-6 flex flex-col h-full">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-sm flex items-center gap-2 text-white uppercase tracking-widest">
-              <Activity className="text-blue-400" size={16} /> Mesh Node Integrity
-            </h3>
-            <div className="flex items-center gap-3">
-               <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded bg-blue-500/40"></div>
-                  <span className="text-[8px] text-slate-500">SECURE</span>
-               </div>
-               <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded bg-amber-400/80"></div>
-                  <span className="text-[8px] text-slate-500">INSPECT</span>
-               </div>
-            </div>
-          </div>
-          <div className="flex-1 grid grid-cols-10 gap-1 overflow-hidden">
-            {Array.from({ length: 80 }).map((_, i) => (
-              <div 
-                key={i} 
-                title="Node Sector Alpha-7-G"
-                className={`aspect-square rounded shadow-inner cursor-pointer hover:scale-110 transition-transform ${
-                  Math.random() > 0.96 ? 'bg-amber-400/80 animate-pulse' : 
-                  Math.random() > 0.8 ? 'bg-blue-500/40' : 
-                  'bg-white/5'
-                }`}
-              ></div>
-            ))}
-          </div>
-          <div className="mt-4 p-3 glass-panel rounded-xl border-white/5 flex items-center gap-3 bg-amber-950/10 border-amber-500/20">
-             <AlertCircle className="text-amber-400 shrink-0" size={18} />
-             <div className="text-[9px] leading-tight text-slate-400 font-medium">
-                Sector 5 Handshake Drift: Automated DPI (Deep Packet Inspection) active. No rouge entities found.
+             <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
+                <p className="text-[9px] font-black text-slate-600 uppercase">Auto-rejection enabled</p>
+                <button className="text-[9px] font-black text-red-500 uppercase tracking-widest hover:text-red-400 transition-colors">Clear Stack</button>
              </div>
           </div>
         </div>

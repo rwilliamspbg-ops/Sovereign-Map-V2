@@ -1,240 +1,282 @@
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { Settings, Eye, Palette, Grid3X3, Wind, Box, Navigation, Layers } from 'lucide-react';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
+import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass';
 
 interface SpatialCanvasProps {
-  grouped?: boolean;
+  isDroneView?: boolean;
 }
 
-const SpatialCanvas: React.FC<SpatialCanvasProps> = ({ grouped = false }) => {
+const SpatialCanvas: React.FC<SpatialCanvasProps> = ({ isDroneView = false }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  
-  // Tracking & Style State
-  const [featColor, setFeatColor] = useState('#4ade80');
-  const [featOpacity, setFeatOpacity] = useState(0.8);
-  
-  // Environment Controls State
-  const [showGrid, setShowGrid] = useState(true);
-  const [fogDensity, setFogDensity] = useState(0.002);
-  const [wireframeMode, setWireframeMode] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  
-  // Refs for Three.js objects
-  const featureMaterialRef = useRef<THREE.PointsMaterial | null>(null);
-  const gridRef = useRef<THREE.GridHelper | null>(null);
-  const fogRef = useRef<THREE.FogExp2 | null>(null);
-  const nodeMaterialRef = useRef<THREE.MeshStandardMaterial | null>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const nodesGroupRef = useRef<THREE.Group | null>(null);
-  const clustersGroupRef = useRef<THREE.Group | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
+  const composerRef = useRef<EffectComposer | null>(null);
+  const scannerLightRef = useRef<THREE.PointLight | null>(null);
 
+  // Transition Camera based on View Mode
   useEffect(() => {
-    if (featureMaterialRef.current) {
-      featureMaterialRef.current.color.set(featColor);
-      featureMaterialRef.current.opacity = featOpacity;
-    }
-  }, [featColor, featOpacity]);
-
-  useEffect(() => {
-    if (gridRef.current) gridRef.current.visible = showGrid;
-  }, [showGrid]);
-
-  useEffect(() => {
-    if (fogRef.current) fogRef.current.density = fogDensity;
-  }, [fogDensity]);
-
-  useEffect(() => {
-    if (nodeMaterialRef.current) nodeMaterialRef.current.wireframe = wireframeMode;
-  }, [wireframeMode]);
-
-  // Handle grouping visibility toggle
-  useEffect(() => {
-    if (nodesGroupRef.current) nodesGroupRef.current.visible = !grouped;
-    if (clustersGroupRef.current) clustersGroupRef.current.visible = grouped;
-  }, [grouped]);
+    if (!cameraRef.current) return;
+    const targetPos = isDroneView ? new THREE.Vector3(120, 40, 180) : new THREE.Vector3(350, 250, 500);
+    const startPos = cameraRef.current.position.clone();
+    
+    let alpha = 0;
+    const animateCamera = () => {
+      alpha += 0.015;
+      const easedAlpha = 1 - Math.pow(1 - alpha, 3); // Cubic ease-out
+      cameraRef.current?.position.lerpVectors(startPos, targetPos, Math.min(easedAlpha, 1));
+      if (alpha < 1) requestAnimationFrame(animateCamera);
+    };
+    animateCamera();
+  }, [isDroneView]);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
     const scene = new THREE.Scene();
-    sceneRef.current = scene;
-    const fog = new THREE.FogExp2(0x020617, fogDensity);
-    scene.fog = fog;
-    fogRef.current = fog;
+    // Volumetric Fog for deep atmospheric immersion
+    scene.fog = new THREE.FogExp2(0x020617, 0.0012);
 
-    const camera = new THREE.PerspectiveCamera(75, containerRef.current.clientWidth / containerRef.current.clientHeight, 0.1, 2000);
-    camera.position.set(200, 150, 400);
+    const camera = new THREE.PerspectiveCamera(65, width / height, 1, 5000);
+    camera.position.set(350, 250, 500);
+    cameraRef.current = camera;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: false, // Antialiasing handled by post-processing/limited pixel ratio
+      alpha: true,
+      powerPreference: "high-performance" 
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Optimized for performance
+    renderer.setSize(width, height);
+    renderer.toneMapping = THREE.ReinhardToneMapping;
+    renderer.toneMappingExposure = 1.2;
     containerRef.current.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
+    controls.dampingFactor = 0.04;
+    controls.autoRotate = !isDroneView;
+    controls.autoRotateSpeed = 0.3;
+    controlsRef.current = controls;
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    // --- POST PROCESSING (AO) ---
+    const composer = new EffectComposer(renderer);
+    const renderPass = new RenderPass(scene, camera);
+    composer.addPass(renderPass);
+
+    const ssaoPass = new SSAOPass(scene, camera, width, height);
+    ssaoPass.kernelRadius = 16;
+    ssaoPass.minDistance = 0.001;
+    ssaoPass.maxDistance = 0.1;
+    ssaoPass.output = SSAOPass.OUTPUT.Default;
+    composer.addPass(ssaoPass);
+    composerRef.current = composer;
+
+    // --- ENHANCED LIGHTING ---
+    const ambientLight = new THREE.AmbientLight(0x1e293b, 0.4);
     scene.add(ambientLight);
-    const pointLight = new THREE.PointLight(0x3b82f6, 2, 1000);
-    pointLight.position.set(0, 200, 0);
-    scene.add(pointLight);
 
-    const gridHelper = new THREE.GridHelper(2000, 50, 0x1e293b, 0x0f172a);
-    gridHelper.position.y = -50;
-    gridHelper.visible = showGrid;
-    scene.add(gridHelper);
-    gridRef.current = gridHelper;
+    const mainLight = new THREE.DirectionalLight(0x3b82f6, 1.5);
+    mainLight.position.set(500, 1000, 500);
+    scene.add(mainLight);
 
-    // --- INDIVIDUAL NODES ---
-    const nodeCount = 60;
-    const nodeGeometry = new THREE.SphereGeometry(4, 12, 12);
-    const nodeMaterial = new THREE.MeshStandardMaterial({
-      color: 0x3b82f6,
-      emissive: 0x1d4ed8,
-      emissiveIntensity: 0.5,
+    // Dynamic Scanner Light (Pulse)
+    const scannerLight = new THREE.PointLight(0x3b82f6, 0, 800);
+    scannerLight.position.y = -90;
+    scene.add(scannerLight);
+    scannerLightRef.current = scannerLight;
+
+    // --- RECTIVE GROUND PLANE ---
+    const groundGeom = new THREE.PlaneGeometry(3000, 3000, 64, 64);
+    const groundMat = new THREE.MeshPhysicalMaterial({
+      color: 0x0a0f1d,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.15,
+      metalness: 0.8,
+      roughness: 0.2,
+      side: THREE.DoubleSide
+    });
+    const ground = new THREE.Mesh(groundGeom, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -100;
+    scene.add(ground);
+
+    // Grid Overlay
+    const grid = new THREE.GridHelper(3000, 60, 0x1e293b, 0x0f172a);
+    grid.position.y = -99.9;
+    scene.add(grid);
+
+    // --- CRYSTALLINE MESH NODES ---
+    const nodesGroup = new THREE.Group();
+    const nodeGeom = new THREE.IcosahedronGeometry(8, 2);
+    
+    // High-quality Physical Material
+    const nodeMat = new THREE.MeshPhysicalMaterial({ 
+      color: 0x3b82f6, 
+      emissive: 0x1d4ed8, 
+      emissiveIntensity: 1.2,
+      metalness: 0.95,
+      roughness: 0.05,
+      transmission: 0.4,
+      thickness: 3,
       transparent: true,
       opacity: 0.9,
-      wireframe: wireframeMode
+      envMapIntensity: 1
     });
-    nodeMaterialRef.current = nodeMaterial;
 
-    const nodesGroup = new THREE.Group();
-    nodesGroupRef.current = nodesGroup;
-    nodesGroup.visible = !grouped;
-    for (let i = 0; i < nodeCount; i++) {
-      const mesh = new THREE.Mesh(nodeGeometry, nodeMaterial);
-      const x = (Math.random() - 0.5) * 800;
-      const y = (Math.random() - 0.2) * 400;
-      const z = (Math.random() - 0.5) * 800;
-      mesh.position.set(x, y, z);
-      nodesGroup.add(mesh);
+    const shieldGeom = new THREE.SphereGeometry(12, 16, 16);
+    const shieldMat = new THREE.MeshBasicMaterial({ 
+      color: 0x3b82f6, 
+      wireframe: true, 
+      transparent: true, 
+      opacity: 0.03 
+    });
+
+    for (let i = 0; i < 24; i++) {
+      const nodeWrap = new THREE.Group();
+      const nodeMesh = new THREE.Mesh(nodeGeom, nodeMat.clone()); // Unique material per node for pulse effects
+      const shieldMesh = new THREE.Mesh(shieldGeom, shieldMat);
+      
+      nodeWrap.add(nodeMesh);
+      nodeWrap.add(shieldMesh);
+      
+      const angle = (i / 24) * Math.PI * 2;
+      const radius = 350 + Math.random() * 550;
+      nodeWrap.position.set(
+        Math.cos(angle) * radius,
+        Math.random() * 250 - 25,
+        Math.sin(angle) * radius
+      );
+      
+      const s = 0.6 + Math.random() * 1.4;
+      nodeWrap.scale.set(s, s, s);
+      
+      nodesGroup.add(nodeWrap);
     }
     scene.add(nodesGroup);
 
-    // --- CLUSTERS (Sovereign Hubs) ---
-    const clusterCount = 5;
-    const clusterGeometry = new THREE.OctahedronGeometry(15);
-    const clusterMaterial = new THREE.MeshStandardMaterial({
-      color: 0x8b5cf6,
-      emissive: 0x6d28d9,
-      emissiveIntensity: 1.5,
-      transparent: true,
-      opacity: 0.8,
-      wireframe: true
+    // --- NEURAL PATHWAYS ---
+    const lineMat = new THREE.LineBasicMaterial({ 
+      color: 0x3b82f6, 
+      transparent: true, 
+      opacity: 0.12 
     });
-    const clustersGroup = new THREE.Group();
-    clustersGroupRef.current = clustersGroup;
-    clustersGroup.visible = grouped;
+    
+    const createConnections = () => {
+      const lineGeom = new THREE.BufferGeometry();
+      const linePos = [];
+      const children = nodesGroup.children;
+      for (let i = 0; i < children.length; i++) {
+        for (let j = i + 1; j < children.length; j++) {
+          const dist = children[i].position.distanceTo(children[j].position);
+          if (dist < 450) {
+            linePos.push(children[i].position.x, children[i].position.y, children[i].position.z);
+            linePos.push(children[j].position.x, children[j].position.y, children[j].position.z);
+          }
+        }
+      }
+      lineGeom.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
+      return new THREE.LineSegments(lineGeom, lineMat);
+    };
+    
+    const connections = createConnections();
+    scene.add(connections);
 
-    for (let i = 0; i < clusterCount; i++) {
-      const mesh = new THREE.Mesh(clusterGeometry, clusterMaterial);
-      const x = (Math.random() - 0.5) * 600;
-      const y = (Math.random() - 0.1) * 300;
-      const z = (Math.random() - 0.5) * 600;
-      mesh.position.set(x, y, z);
-      clustersGroup.add(mesh);
+    // --- VOLUMETRIC SCANNER ---
+    const scannerGeom = new THREE.TorusGeometry(1, 0.4, 16, 100);
+    const scannerMat = new THREE.MeshBasicMaterial({ 
+      color: 0x60a5fa, 
+      transparent: true, 
+      opacity: 0.6 
+    });
+    const scanner = new THREE.Mesh(scannerGeom, scannerMat);
+    scanner.rotation.x = Math.PI / 2;
+    scanner.position.y = -98;
+    scene.add(scanner);
 
-      // Add "shield" or range sphere for clusters
-      const rangeGeom = new THREE.SphereGeometry(60, 16, 16);
-      const rangeMat = new THREE.MeshBasicMaterial({ color: 0x8b5cf6, transparent: true, opacity: 0.03, wireframe: true });
-      const rangeMesh = new THREE.Mesh(rangeGeom, rangeMat);
-      rangeMesh.position.set(x, y, z);
-      clustersGroup.add(rangeMesh);
+    // --- STARFIELD ---
+    const starsGeom = new THREE.BufferGeometry();
+    const starCount = 3000;
+    const starPos = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount; i++) {
+      starPos[i * 3] = (Math.random() - 0.5) * 5000;
+      starPos[i * 3 + 1] = (Math.random() - 0.5) * 2500;
+      starPos[i * 3 + 2] = (Math.random() - 0.5) * 5000;
     }
-    scene.add(clustersGroup);
-
-    // --- FLIGHT CORRIDOR (Glow Path) ---
-    const curvePoints = [
-      new THREE.Vector3(-400, 100, -400),
-      new THREE.Vector3(-100, 150, 0),
-      new THREE.Vector3(200, 250, 300),
-      new THREE.Vector3(500, 100, 500)
-    ];
-    const curve = new THREE.CatmullRomCurve3(curvePoints);
-    const tubeGeometry = new THREE.TubeGeometry(curve, 64, 2, 8, false);
-    const tubeMaterial = new THREE.MeshBasicMaterial({
-      color: 0x3b82f6,
-      transparent: true,
-      opacity: 0.3,
-      wireframe: true
+    starsGeom.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const starMat = new THREE.PointsMaterial({ 
+      color: 0xffffff, 
+      size: 1.2, 
+      transparent: true, 
+      opacity: 0.35,
+      sizeAttenuation: true 
     });
-    const flightTube = new THREE.Mesh(tubeGeometry, tubeMaterial);
-    scene.add(flightTube);
-
-    // --- KINETIC ENTITY (Drone Marker) ---
-    const droneGeometry = new THREE.ConeGeometry(8, 16, 4);
-    const droneMaterial = new THREE.MeshPhongMaterial({
-      color: 0x4ade80,
-      emissive: 0x22c55e,
-      emissiveIntensity: 0.8
-    });
-    const drone = new THREE.Mesh(droneGeometry, droneMaterial);
-    drone.rotateX(Math.PI / 2);
-    scene.add(drone);
-
-    // --- SLAM FEATURES ---
-    const sprite = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/disc.png');
-    const featureMaterial = new THREE.PointsMaterial({
-      size: 3,
-      color: featColor,
-      map: sprite,
-      transparent: true,
-      opacity: featOpacity,
-      blending: THREE.AdditiveBlending,
-    });
-    featureMaterialRef.current = featureMaterial;
-    const featCount = 80;
-    const featGeom = new THREE.BufferGeometry();
-    const featPos = new Float32Array(featCount * 3);
-    for(let i=0; i<featCount; i++){
-      featPos[i*3] = (Math.random()-0.5)*700;
-      featPos[i*3+1] = (Math.random()-0.5)*350;
-      featPos[i*3+2] = (Math.random()-0.5)*700;
-    }
-    featGeom.setAttribute('position', new THREE.BufferAttribute(featPos, 3));
-    const features = new THREE.Points(featGeom, featureMaterial);
-    scene.add(features);
+    const stars = new THREE.Points(starsGeom, starMat);
+    scene.add(stars);
 
     // --- ANIMATION ---
+    const clock = new THREE.Clock();
     let frameId: number;
-    let t = 0;
+
     const animate = () => {
       frameId = requestAnimationFrame(animate);
-      t += 0.001;
-      
-      const pos = curve.getPointAt(t % 1);
-      drone.position.copy(pos);
-      const tangent = curve.getTangentAt(t % 1);
-      drone.lookAt(pos.clone().add(tangent));
-      drone.rotateX(Math.PI / 2);
+      const time = clock.getElapsedTime();
 
-      tubeMaterial.opacity = 0.2 + Math.sin(t * 10) * 0.1;
+      // Scanner Ring Pulse
+      const scanCycle = (time % 6) / 6;
+      const scanRadius = scanCycle * 1800;
+      scanner.scale.set(scanRadius, scanRadius, 1);
+      scanner.material.opacity = Math.pow(1 - scanCycle, 2) * 0.7;
       
-      nodesGroup.rotation.y += 0.0002;
-      clustersGroup.rotation.y -= 0.0001;
-      clustersGroup.children.forEach((c, idx) => {
-        if (c instanceof THREE.Mesh) {
-           c.rotation.x += 0.01;
-           c.rotation.z += 0.01;
-        }
+      if (scannerLightRef.current) {
+        scannerLightRef.current.intensity = scanner.material.opacity * 30;
+        scannerLightRef.current.distance = scanRadius + 250;
+      }
+
+      // Nodes kinetic behavior
+      nodesGroup.children.forEach((wrap, i) => {
+        const node = wrap.children[0] as THREE.Mesh;
+        const shield = wrap.children[1] as THREE.Mesh;
+        
+        node.rotation.y += 0.004 + (i * 0.0001);
+        node.rotation.x += 0.001;
+        wrap.position.y += Math.sin(time * 0.4 + i) * 0.15;
+        
+        const pulse = Math.sin(time * 1.5 + i) * 0.5 + 0.5;
+        (node.material as THREE.MeshPhysicalMaterial).emissiveIntensity = 0.8 + pulse * 1.5;
+        shield.rotation.z -= 0.008;
+        shield.scale.setScalar(1 + pulse * 0.08);
       });
 
-      features.rotation.y -= 0.0005;
+      stars.rotation.y += 0.00005;
+      ground.position.y = -100 + Math.sin(time * 0.25) * 0.4;
 
       controls.update();
-      renderer.render(scene, camera);
+      
+      // Use composer instead of renderer directly for AO
+      if (composerRef.current) {
+        composerRef.current.render();
+      } else {
+        renderer.render(scene, camera);
+      }
     };
 
     animate();
 
     const handleResize = () => {
-      if (!containerRef.current) return;
-      camera.aspect = containerRef.current.clientWidth / containerRef.current.clientHeight;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
+      renderer.setSize(w, h);
+      composer.setSize(w, h);
     };
     window.addEventListener('resize', handleResize);
 
@@ -246,61 +288,7 @@ const SpatialCanvas: React.FC<SpatialCanvasProps> = ({ grouped = false }) => {
     };
   }, []);
 
-  return (
-    <div ref={containerRef} className="w-full h-full relative group cursor-move">
-      <div className="absolute top-4 left-4 z-10 space-y-2 pointer-events-none">
-        <div className="bg-slate-950/60 backdrop-blur-md border border-white/5 px-3 py-1.5 rounded-lg">
-           <div className="flex items-center gap-2 mb-1">
-             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-             <p className="text-[9px] font-black text-white uppercase tracking-widest">
-               {grouped ? 'STRATEGIC HUB VIEW' : 'SLAM ENGINE: LOCKED'}
-             </p>
-           </div>
-           <div className="flex gap-4 text-[8px] font-mono text-slate-400">
-             <span>Sectors: {grouped ? '5 Clusters' : 'Direct'}</span>
-             <span>Health: Nominal</span>
-           </div>
-        </div>
-      </div>
-
-      <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
-        <button 
-          onClick={() => setShowSettings(!showSettings)}
-          className="p-2.5 bg-slate-950/60 backdrop-blur-md border border-white/10 rounded-xl text-slate-400 hover:text-blue-400 transition-all pointer-events-auto shadow-xl"
-        >
-          <Settings size={18} />
-        </button>
-
-        {showSettings && (
-          <div className="bg-slate-950/90 backdrop-blur-xl border border-white/10 p-6 rounded-[2rem] w-72 space-y-6 animate-in slide-in-from-right-4 duration-300 pointer-events-auto shadow-2xl max-h-[80vh] overflow-y-auto custom-scrollbar">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Box size={14} className="text-blue-400" />
-                <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Environment Layers</h4>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
-                <div className="flex items-center gap-2 text-slate-300 text-[10px] font-bold uppercase">Grid</div>
-                <button onClick={() => setShowGrid(!showGrid)} className={`w-8 h-4 rounded-full ${showGrid ? 'bg-blue-600' : 'bg-slate-800'}`}></button>
-              </div>
-
-              <div className="p-3 bg-white/5 rounded-xl">
-                <div className="flex justify-between items-center mb-2">
-                   <div className="text-[10px] font-bold text-slate-300 uppercase">Fog</div>
-                   <span className="text-[9px] font-mono text-blue-400">{(fogDensity * 1000).toFixed(1)}</span>
-                </div>
-                <input type="range" min="0" max="0.01" step="0.0001" value={fogDensity} onChange={e=>setFogDensity(parseFloat(e.target.value))} className="w-full accent-blue-500" />
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="absolute bottom-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-950/60 backdrop-blur px-3 py-1.5 rounded-lg border border-white/5 pointer-events-none text-[9px] font-black text-blue-400 uppercase tracking-widest">
-        Orbit: Left Click | Zoom: Scroll | Pan: Right Click
-      </div>
-    </div>
-  );
+  return <div ref={containerRef} className="fixed inset-0 z-[-1] pointer-events-auto select-none" />;
 };
 
 export default SpatialCanvas;

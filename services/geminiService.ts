@@ -60,6 +60,35 @@ export const checkApiHealth = async (): Promise<boolean> => {
   }
 };
 
+export const determineDefenseManeuver = async (threatVector: string, intensity: number) => {
+  const prompt = `A node is under a ${threatVector} attack with an intensity of ${intensity}%. 
+  Choose the best autonomous action: (Isolation, Signal-Scrambling, Consensus-Migration, or Stealth-Cycle). 
+  Provide a tactical justification for the choice.`;
+
+  const systemInstruction = "You are the SovereignMap Tactical Defense Engine. You make split-second decisions for autonomous nodes. Be brief, technical, and prioritize network survival.";
+  
+  return await callGeminiWithRetry('gemini-3-flash-preview', prompt, systemInstruction);
+};
+
+export const classifySpatialObject = async (imageDataBase64: string, meshContext: string) => {
+  const prompt = [
+    { inlineData: { mimeType: "image/jpeg", data: imageDataBase64 } },
+    { text: `Identify all objects in this spatial scan. Categorize them as (Humanoid, UGV, Drone, or Obstacle). 
+    Context: ${meshContext}. 
+    Assess if these objects are registered in the local sovereign mesh or are anonymous 'ghost' entities.` }
+  ];
+
+  const systemInstruction = "You are a Spatial Intelligence Unit. You identify objects in 3D space and correlate them with decentralized identity registries. Be precise and technically focused.";
+  
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: { parts: prompt },
+    config: { systemInstruction }
+  });
+  return response.text;
+};
+
 export const analyzeThreatVector = async (logs: any[]) => {
   const prompt = `Analyze these recent network security logs for coordinated attack patterns (Eclipse, Sybil, Routing manipulation).
   Logs: ${JSON.stringify(logs)}

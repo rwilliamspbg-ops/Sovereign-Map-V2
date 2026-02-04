@@ -15,10 +15,10 @@ import {
   Scale,
   Map,
   Mic,
-  Activity,
   ChevronDown,
   Radio,
-  Navigation as NavIcon
+  Navigation as NavIcon,
+  Activity
 } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import NetworkView from './components/NetworkView';
@@ -31,6 +31,7 @@ import AtlasView from './components/AtlasView';
 import VoiceTerminal from './components/VoiceTerminal';
 import BeaconTerminal from './components/BeaconTerminal';
 import AutonomousCommand from './components/AutonomousCommand';
+import SpatialCanvas from './components/SpatialCanvas';
 import { AppRoute } from './types';
 
 const Navigation = ({ onVoiceToggle }: { onVoiceToggle: () => void }) => {
@@ -41,111 +42,90 @@ const Navigation = ({ onVoiceToggle }: { onVoiceToggle: () => void }) => {
   const isActive = (path: string) => location.hash.includes(path) || (location.hash === '' && path === AppRoute.DASHBOARD);
 
   const navItems = [
-    { label: 'Intelligence', icon: <LayoutDashboard size={20} />, path: AppRoute.DASHBOARD },
-    { label: 'Command Hub', icon: <NavIcon size={20} />, path: AppRoute.COMMAND },
-    { label: 'Active Beacon', icon: <Radio size={20} />, path: AppRoute.BEACON },
-    { label: 'Neural Atlas', icon: <Map size={20} />, path: AppRoute.ATLAS },
-    { label: 'Governance', icon: <Scale size={20} />, path: AppRoute.GOVERNANCE },
-    { label: 'Spatial Mesh', icon: <Network size={20} />, path: AppRoute.NETWORK },
-    { label: 'Security Unit', icon: <ShieldAlert size={20} />, path: AppRoute.SECURITY },
-    { label: 'Verification', icon: <CheckCircle size={20} />, path: AppRoute.VERIFY },
-    { label: 'Data Uplink', icon: <UploadCloud size={20} />, path: AppRoute.UPLINK },
-    { label: 'Identity', icon: <Fingerprint size={20} />, path: AppRoute.IDENTITY },
+    { label: 'Intelligence', icon: <LayoutDashboard size={18} />, path: AppRoute.DASHBOARD },
+    { label: 'Command Hub', icon: <NavIcon size={18} />, path: AppRoute.COMMAND },
+    { label: 'Neural Atlas', icon: <Map size={18} />, path: AppRoute.ATLAS },
+    { label: 'Governance', icon: <Scale size={18} />, path: AppRoute.GOVERNANCE },
+    { label: 'Spatial Mesh', icon: <Network size={18} />, path: AppRoute.NETWORK },
+    { label: 'Security Unit', icon: <ShieldAlert size={18} />, path: AppRoute.SECURITY },
+    { label: 'Verification', icon: <CheckCircle size={18} />, path: AppRoute.VERIFY },
+    { label: 'Identity', icon: <Fingerprint size={18} />, path: AppRoute.IDENTITY },
   ];
 
   return (
     <>
-      <nav className="hidden md:flex flex-col w-64 bg-slate-950 border-r border-slate-900/50 h-screen sticky top-0 p-5 flex-shrink-0">
-        <div className="flex items-center gap-3 mb-6 px-2 group cursor-pointer">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-[0_0_25px_rgba(37,99,235,0.4)] relative overflow-hidden">
-            <Globe className="text-white z-10 group-hover:scale-110 transition-transform" />
-            <div className="absolute inset-0 bg-gradient-to-tr from-blue-700 to-transparent animate-pulse"></div>
+      <nav className="hidden lg:flex flex-col w-64 bg-slate-950/20 backdrop-blur-3xl border-r border-white/5 h-screen sticky top-0 p-6 flex-shrink-0 z-50">
+        <div className="flex items-center gap-3 mb-10 px-2 group cursor-pointer">
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)] relative">
+            <Globe className="text-white" size={20} />
+            <div className="absolute inset-0 bg-white/20 animate-ping rounded-xl opacity-20"></div>
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tight text-white leading-none">SOVEREIGN</h1>
-            <p className="text-[10px] font-mono text-blue-500 font-bold tracking-widest uppercase">Mesh Network</p>
+            <h1 className="text-lg font-black tracking-tighter text-white leading-none">SOVEREIGN</h1>
+            <p className="text-[9px] font-mono text-blue-500 font-black tracking-widest uppercase mt-0.5">Neural Mesh</p>
           </div>
         </div>
 
-        <div className="mb-6 px-2">
-           <button 
-            onClick={() => setNetwork(prev => prev === 'MAINNET' ? 'TESTNET' : 'MAINNET')}
-            className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/10 transition-all"
-           >
-             <span className="flex items-center gap-2">
-               <div className={`w-2 h-2 rounded-full ${network === 'MAINNET' ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-amber-500 animate-pulse'}`}></div>
-               {network}
-             </span>
-             <ChevronDown size={12} />
-           </button>
-        </div>
-
-        <div className="flex-1 space-y-1 overflow-y-auto custom-scrollbar pr-1">
+        <div className="flex-1 space-y-1 overflow-y-auto custom-scrollbar pr-2">
           {navItems.map((item) => (
             <Link
               key={item.path}
               to={`/${item.path}`}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 group ${
                 isActive(item.path) 
-                ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20' 
-                : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900/40'
+                ? 'bg-blue-600/20 text-blue-400 border border-blue-500/20 shadow-lg' 
+                : 'text-slate-500 hover:text-white hover:bg-white/5'
               }`}
             >
-              <span className={`transition-transform duration-200 ${isActive(item.path) ? 'scale-110' : 'group-hover:scale-110'}`}>
+              <span className={isActive(item.path) ? 'scale-110' : 'group-hover:scale-110'}>
                 {item.icon}
               </span>
-              <span className="text-sm font-medium">{item.label}</span>
+              <span className="text-xs font-black uppercase tracking-widest">{item.label}</span>
             </Link>
           ))}
         </div>
 
-        <div className="pt-6 border-t border-slate-900 mt-auto space-y-4">
+        <div className="pt-6 border-t border-white/5 mt-auto space-y-4">
           <button 
             onClick={onVoiceToggle}
-            className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-blue-600 text-white font-bold text-xs uppercase tracking-widest hover:bg-blue-500 transition-all shadow-xl shadow-blue-900/20 group"
+            className="w-full flex items-center gap-3 p-4 rounded-2xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-500 transition-all shadow-2xl active:scale-95 group"
           >
-            <Mic size={18} className="group-hover:scale-110 transition-transform" />
-            Neural Link
+            <Mic size={18} /> Neural Link
           </button>
           
-          <button className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-800 bg-slate-900/20 hover:bg-slate-900/60 transition-colors group">
-            <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg group-hover:bg-blue-500/20 transition-colors">
-              <Wallet size={16} />
-            </div>
-            <div className="text-left overflow-hidden">
-              <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Operator Address</p>
-              <p className="text-[11px] font-mono text-slate-300 truncate">0x74B...8F2C</p>
-            </div>
-          </button>
+          <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center gap-3">
+             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+             <div className="flex-1 overflow-hidden">
+                <p className="text-[8px] font-black text-slate-500 uppercase">Operator Core</p>
+                <p className="text-[10px] font-mono text-slate-300 truncate">SOV-7-ALPHA-42</p>
+             </div>
+          </div>
         </div>
       </nav>
 
-      <div className="md:hidden flex items-center justify-between p-4 bg-slate-950 border-b border-slate-900 sticky top-0 z-50 backdrop-blur-md bg-opacity-80 flex-shrink-0">
-        <div className="flex items-center gap-2">
-          <Globe className="text-blue-500" size={24} />
-          <span className="font-bold text-white tracking-tight">SOVEREIGN MAP</span>
-        </div>
-        <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-slate-400 hover:text-white">
+      {/* Mobile Toggle */}
+      <div className="lg:hidden flex items-center justify-between p-4 bg-slate-950/80 backdrop-blur-xl border-b border-white/5 sticky top-0 z-[60]">
+        <Globe className="text-blue-500" size={24} />
+        <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-white">
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
       {isOpen && (
-        <div className="md:hidden fixed inset-0 bg-slate-950 z-40 pt-20 px-6 space-y-2 animate-in fade-in duration-200">
-          <button onClick={() => { setIsOpen(false); onVoiceToggle(); }} className="w-full flex items-center gap-4 p-4 rounded-xl bg-blue-600 text-white font-bold">
-            <Mic size={20} /> Neural Link
-          </button>
+        <div className="lg:hidden fixed inset-0 bg-slate-950 z-50 pt-20 px-6 space-y-2 animate-in fade-in">
           {navItems.map((item) => (
             <Link
               key={item.path}
               to={`/${item.path}`}
               onClick={() => setIsOpen(false)}
-              className="flex items-center gap-4 p-4 rounded-xl bg-slate-900 border border-slate-800 text-white font-medium"
+              className="flex items-center gap-4 p-5 rounded-2xl bg-white/5 border border-white/5 text-white text-xs font-black uppercase tracking-widest"
             >
-              {item.icon}
-              {item.label}
+              {item.icon} {item.label}
             </Link>
           ))}
+          <button onClick={onVoiceToggle} className="w-full mt-4 p-5 bg-blue-600 rounded-2xl text-white font-black uppercase tracking-widest">
+            Neural Link
+          </button>
         </div>
       )}
     </>
@@ -154,32 +134,39 @@ const Navigation = ({ onVoiceToggle }: { onVoiceToggle: () => void }) => {
 
 function App() {
   const [showVoice, setShowVoice] = useState(false);
+  const location = useLocation();
+  const isDroneMode = location.hash.includes(AppRoute.COMMAND) || location.hash.includes(AppRoute.BEACON);
 
   return (
-    <HashRouter>
-      <div className="flex flex-col md:flex-row h-screen bg-slate-950 text-slate-50 overflow-hidden">
-        <Navigation onVoiceToggle={() => setShowVoice(true)} />
-        <main className="flex-1 relative overflow-y-auto custom-scrollbar">
-          <div className="relative z-10 p-5 md:p-8 lg:p-10 max-w-full mx-auto w-full">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/network" element={<NetworkView />} />
-              <Route path="/identity" element={<IdentityView />} />
-              <Route path="/uplink" element={<UplinkView />} />
-              <Route path="/security" element={<SecurityView />} />
-              <Route path="/verify" element={<VerificationHub />} />
-              <Route path="/governance" element={<GovernanceCore />} />
-              <Route path="/atlas" element={<AtlasView />} />
-              <Route path="/beacon" element={<BeaconTerminal />} />
-              <Route path="/command" element={<AutonomousCommand />} />
-            </Routes>
-          </div>
-        </main>
-        {showVoice && <VoiceTerminal onClose={() => setShowVoice(false)} />}
-      </div>
-    </HashRouter>
+    <div className="flex flex-col lg:flex-row h-screen bg-transparent overflow-hidden">
+      <SpatialCanvas isDroneView={isDroneMode} />
+      <Navigation onVoiceToggle={() => setShowVoice(true)} />
+      <main className="flex-1 relative overflow-y-auto custom-scrollbar">
+        <div className="p-6 lg:p-10 max-w-[1400px] mx-auto w-full min-h-screen">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/network" element={<NetworkView />} />
+            <Route path="/identity" element={<IdentityView />} />
+            <Route path="/uplink" element={<UplinkView />} />
+            <Route path="/security" element={<SecurityView />} />
+            <Route path="/verify" element={<VerificationHub />} />
+            <Route path="/governance" element={<GovernanceCore />} />
+            <Route path="/atlas" element={<AtlasView />} />
+            <Route path="/beacon" element={<BeaconTerminal />} />
+            <Route path="/command" element={<AutonomousCommand />} />
+          </Routes>
+        </div>
+      </main>
+      {showVoice && <VoiceTerminal onClose={() => setShowVoice(false)} />}
+    </div>
   );
 }
 
-export default App;
+export default function AppWrapper() {
+  return (
+    <HashRouter>
+      <App />
+    </HashRouter>
+  );
+}

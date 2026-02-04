@@ -4,7 +4,7 @@ export interface SpatialNode {
   lat: number;
   lng: number;
   intensity: number;
-  status: 'active' | 'syncing' | 'offline' | 'threat' | 'discovered' | 'unregistered';
+  status: 'active' | 'syncing' | 'offline' | 'threat' | 'discovered' | 'unregistered' | 'defending' | 'cloaked' | 'quarantined';
   label: string;
   encryption: 'AES-256' | 'Quantum-Resistant' | 'P2P-Layer' | 'None';
   discoveredAt?: number;
@@ -13,7 +13,7 @@ export interface SpatialNode {
 export interface KineticEntity {
   id: string;
   type: 'Drone' | 'UGV' | 'Humanoid' | 'Satellite';
-  status: 'Idle' | 'In-Flight' | 'Scanning' | 'Charging' | 'Emergency';
+  status: 'Idle' | 'In-Flight' | 'Scanning' | 'Charging' | 'Emergency' | 'Defensive-Maneuver';
   battery: number;
   position: { x: number; y: number; z: number };
   target?: { x: number; y: number; z: number };
