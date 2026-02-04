@@ -45,9 +45,6 @@ async function callGeminiWithRetry(
   return null;
 }
 
-/**
- * Rapid health check to verify API connectivity.
- */
 export const checkApiHealth = async (): Promise<boolean> => {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -61,6 +58,17 @@ export const checkApiHealth = async (): Promise<boolean> => {
     console.error("Health check failed:", e);
     return false;
   }
+};
+
+export const analyzeThreatVector = async (logs: any[]) => {
+  const prompt = `Analyze these recent network security logs for coordinated attack patterns (Eclipse, Sybil, Routing manipulation).
+  Logs: ${JSON.stringify(logs)}
+  
+  Identify the most likely vector and provide a 2-sentence mitigation strategy for the autonomous firewall.`;
+
+  const systemInstruction = "You are the SovereignMap Head of Cyber-Defense. You are laconic, highly technical, and focused on quantum-resistant mitigation strategies.";
+  
+  return await callGeminiWithRetry('gemini-3-flash-preview', prompt, systemInstruction);
 };
 
 export const analyzeSpatialTrends = async (nodes: any[]) => {
