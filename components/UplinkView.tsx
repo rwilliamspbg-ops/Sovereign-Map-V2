@@ -11,7 +11,8 @@ import {
   UploadCloud,
   ChevronRight,
   ShieldCheck,
-  Zap
+  Zap,
+  Target
 } from 'lucide-react';
 
 const UplinkView: React.FC = () => {
@@ -88,22 +89,49 @@ const UplinkView: React.FC = () => {
         <div className="p-10">
           {isScanning ? (
             <div className="space-y-8 animate-in zoom-in-95 duration-500">
-              <div className="relative aspect-video bg-black/40 rounded-[2.5rem] overflow-hidden group border border-white/10 shadow-inner">
-                <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover opacity-80" />
-                
-                {/* Modernized Scan HUD */}
-                <div className="absolute inset-0 pointer-events-none p-12 flex items-center justify-center">
-                  <div className="relative w-full h-full border-2 border-blue-500/20 rounded-3xl">
-                    <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-blue-500 rounded-tl-3xl shadow-[0_0_15px_#3b82f6]"></div>
-                    <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-blue-500 rounded-tr-3xl shadow-[0_0_15px_#3b82f6]"></div>
-                    <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-blue-500 rounded-bl-3xl shadow-[0_0_15px_#3b82f6]"></div>
-                    <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-blue-500 rounded-br-3xl shadow-[0_0_15px_#3b82f6]"></div>
-                    <div className="w-full h-[2px] bg-gradient-to-r from-transparent via-blue-400 to-transparent absolute top-0 animate-[scan_3s_linear_infinite] shadow-[0_0_10px_#3b82f6]"></div>
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div className="lg:col-span-3 relative aspect-video bg-black/40 rounded-[2.5rem] overflow-hidden group border border-white/10 shadow-inner">
+                  <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover opacity-80" />
+                  
+                  {/* Modernized Scan HUD */}
+                  <div className="absolute inset-0 pointer-events-none p-12 flex items-center justify-center">
+                    <div className="relative w-full h-full border-2 border-blue-500/20 rounded-3xl">
+                      <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-blue-500 rounded-tl-3xl shadow-[0_0_15px_#3b82f6]"></div>
+                      <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-blue-500 rounded-tr-3xl shadow-[0_0_15px_#3b82f6]"></div>
+                      <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-blue-500 rounded-bl-3xl shadow-[0_0_15px_#3b82f6]"></div>
+                      <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-blue-500 rounded-br-3xl shadow-[0_0_15px_#3b82f6]"></div>
+                      <div className="w-full h-[2px] bg-gradient-to-r from-transparent via-blue-400 to-transparent absolute top-0 animate-[scan_3s_linear_infinite] shadow-[0_0_10px_#3b82f6]"></div>
+                    </div>
+                  </div>
+
+                  <div className="absolute top-6 left-6 bg-red-600/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-red-500/30 text-[10px] font-black text-red-500 animate-pulse flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-red-500"></div> SENSOR LINK ACTIVE
                   </div>
                 </div>
 
-                <div className="absolute top-6 left-6 bg-red-600/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-red-500/30 text-[10px] font-black text-red-500 animate-pulse flex items-center gap-2">
-                   <div className="w-2 h-2 rounded-full bg-red-500"></div> SENSOR LINK ACTIVE
+                {/* SLAM Engine Telemetry */}
+                <div className="lg:col-span-1 glass-panel p-6 rounded-[2rem] border-white/5 space-y-6 flex flex-col justify-center">
+                   <div className="space-y-1">
+                      <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">SLAM Engine</p>
+                      <h4 className="text-sm font-bold text-white">ORB-SLAM3 v1.0</h4>
+                   </div>
+                   <div className="space-y-3">
+                      {[
+                        { l: 'Tracking', v: 'LOCKED', c: 'text-green-400' },
+                        { l: 'Keypoints', v: '2,482', c: 'text-white' },
+                        { l: 'Loop Closure', v: 'ENABLED', c: 'text-blue-400' },
+                      ].map((s, i) => (
+                        <div key={i} className="flex justify-between p-2 bg-white/5 rounded-lg text-[9px] font-bold uppercase tracking-wider">
+                          <span className="text-slate-500">{s.l}</span>
+                          <span className={s.c}>{s.v}</span>
+                        </div>
+                      ))}
+                   </div>
+                   <div className="pt-4 border-t border-white/5">
+                      <div className="flex items-center gap-2 text-amber-400 text-[10px] font-black uppercase">
+                         <Target size={14} /> Relocalizing...
+                      </div>
+                   </div>
                 </div>
               </div>
               
