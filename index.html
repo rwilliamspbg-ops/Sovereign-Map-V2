@@ -6,30 +6,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SovereignMap | Neural Mesh</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --mesh-primary: #3b82f6;
+            --mesh-bg: #020617;
+            --mesh-surface: rgba(15, 23, 42, 0.6);
+            --mesh-border: rgba(255, 255, 255, 0.08);
+        }
         body {
             margin: 0;
-            background-color: #020617;
-            color: #f8fafc;
-            font-family: 'Space+Grotesk', sans-serif;
-            overflow: hidden;
+            background-color: var(--mesh-bg);
+            color: #f1f5f9;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow: hidden; /* Prevent body scroll to keep dashboard feeling */
+            -webkit-font-smoothing: antialiased;
+            height: 100vh;
         }
         .font-mono {
-            font-family: 'JetBrains+Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
         }
-        ::-webkit-scrollbar {
-            width: 4px;
+        /* Custom Smooth Transitions */
+        * {
+            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        ::-webkit-scrollbar-track {
-            background: #0f172a;
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: var(--mesh-surface);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--mesh-border);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
+        .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .glass-card:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            background: rgba(30, 41, 59, 0.6);
+        }
+        /* Custom scrollbar for inner containers */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
         }
-        .mesh-gradient {
-            background: radial-gradient(circle at 50% 50%, rgba(30, 64, 175, 0.15) 0%, rgba(2, 6, 23, 1) 100%);
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
+        /* Mesh Background Animation */
+        .mesh-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 0% 0%, rgba(37, 99, 235, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                var(--mesh-bg);
         }
     </style>
 <script type="importmap">
@@ -47,6 +88,7 @@
 </script>
 </head>
 <body>
+    <div class="mesh-bg"></div>
     <div id="root"></div>
 </body>
 </html>

@@ -1,39 +1,24 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  BarChart,
-  Bar
-} from 'recharts';
-import { 
-  Zap, 
-  Cpu, 
   Layers, 
-  AlertCircle, 
-  ArrowUpRight,
+  ShieldAlert, 
   RefreshCcw,
   Sparkles,
   Globe,
-  Activity,
-  ShieldCheck
+  ShieldCheck,
+  Lock,
+  Coins,
+  ChevronRight,
+  TrendingUp,
+  BrainCircuit,
+  Zap,
+  Scale
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { analyzeSpatialTrends } from '../services/geminiService';
 import SpatialCanvas from './SpatialCanvas';
-
-const mockData = [
-  { time: '00:00', load: 40, nodes: 2400 },
-  { time: '04:00', load: 30, nodes: 2580 },
-  { time: '08:00', load: 65, nodes: 2800 },
-  { time: '12:00', load: 85, nodes: 3200 },
-  { time: '16:00', load: 70, nodes: 3100 },
-  { time: '20:00', load: 50, nodes: 3400 },
-];
+import { AppRoute } from '../types';
 
 const Dashboard: React.FC = () => {
   const [aiInsight, setAiInsight] = useState<string>("Initializing neural analysis...");
@@ -51,114 +36,120 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Mesh Overview</h2>
-          <p className="text-slate-400">Monitoring sovereign digital expansion across nodes.</p>
+          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white mb-1">Command Dashboard</h2>
+          <div className="flex items-center gap-3 text-slate-400">
+            <span className="flex items-center gap-1.5 text-xs font-medium">
+              <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e]"></span>
+              Mesh Sustainability: 94% (Stable)
+            </span>
+            <span className="text-slate-800">•</span>
+            <span className="text-xs">Uplink: Sector 7 Alpha-4 (Verified)</span>
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3">
+          <Link 
+            to={`/${AppRoute.GOVERNANCE}`}
+            className="flex items-center gap-2 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 px-5 py-2.5 rounded-xl font-bold transition-all text-sm hover:bg-indigo-600 hover:text-white"
+          >
+            <Scale size={16} />
+            Governance Active
+          </Link>
           <button 
             onClick={refreshInsight}
             disabled={loadingInsight}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg active:scale-95 disabled:opacity-50 text-sm"
           >
-            <RefreshCcw size={18} className={loadingInsight ? 'animate-spin' : ''} />
-            Recalibrate Mesh
+            <RefreshCcw size={16} className={loadingInsight ? 'animate-spin' : ''} />
+            Recalibrate
           </button>
         </div>
       </header>
 
-      {/* Hero Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Mesh Nodes', value: '42,891', icon: <Layers className="text-blue-500" />, trend: '+12%' },
-          { label: 'Network Throughput', value: '1.4 PB/s', icon: <Zap className="text-amber-500" />, trend: '+5%' },
-          { label: 'Neural Processing', value: '88.4 TFLOPS', icon: <Cpu className="text-purple-500" />, trend: '+22%' },
-          { label: 'Reputation Pool', value: '984K $SOV', icon: <ShieldCheck className="text-green-500" />, trend: '+2%' },
+          { label: 'Mesh Reach', value: '42,891', icon: <Layers className="text-blue-400" size={20} />, delta: '+1.2k', sub: 'Spatial peers' },
+          { label: 'Consensus', value: '98.4%', icon: <ShieldCheck className="text-green-400" size={20} />, delta: 'Stable', sub: 'Trust verified' },
+          { label: 'Sustainability', value: '94.2%', icon: <Zap className="text-indigo-400" size={20} />, delta: 'Optimal', sub: 'Self-governed' },
+          { label: 'Network Value', value: '1.2M $SOV', icon: <Coins className="text-amber-400" size={20} />, delta: '+42k', sub: 'Total pool' },
         ].map((stat, i) => (
-          <div key={i} className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl backdrop-blur-sm group hover:border-blue-500/30 transition-all">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-2 bg-slate-800 rounded-lg group-hover:scale-110 transition-transform">
+          <div key={i} className="glass-panel p-4 md:p-5 rounded-2xl group cursor-default hover:bg-slate-900/40 transition-all flex flex-col justify-between">
+            <div className="flex justify-between items-start mb-2">
+              <div className="p-2 bg-slate-800/50 rounded-lg text-white group-hover:scale-105 transition-transform">
                 {stat.icon}
               </div>
-              <span className="text-xs font-bold text-green-400 bg-green-400/10 px-2 py-1 rounded">{stat.trend}</span>
+              <div className="flex flex-col items-end">
+                <span className={`text-[10px] font-black uppercase tracking-widest ${stat.delta === 'Optimal' ? 'text-indigo-400' : 'text-green-400'}`}>
+                  {stat.delta}
+                </span>
+              </div>
             </div>
-            <p className="text-slate-400 text-sm mb-1 uppercase tracking-wider font-mono">{stat.label}</p>
-            <h3 className="text-2xl font-bold">{stat.value}</h3>
+            <div>
+              <h3 className="text-xl font-bold text-white leading-tight">{stat.value}</h3>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{stat.label}</p>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Spatial Map */}
-        <div className="lg:col-span-2 bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden flex flex-col min-h-[400px]">
-          <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/60">
-            <h3 className="font-bold flex items-center gap-2 uppercase tracking-widest text-xs text-blue-400">
-              <Globe size={14} /> Real-time Spatial Awareness
-            </h3>
-            <div className="flex gap-2">
-              <span className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span> NODES ACTIVE
-              </span>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8 glass-panel rounded-3xl overflow-hidden flex flex-col h-[400px] lg:h-[500px] relative">
+          <div className="absolute top-4 left-4 z-20 flex items-center gap-2 glass-panel px-3 py-1.5 rounded-lg border-white/5 bg-slate-950/40">
+             <Globe size={14} className="text-blue-400 animate-pulse" />
+             <span className="text-[9px] font-black text-white uppercase tracking-[0.2em]">Neural Mesh Live Feed</span>
+          </div>
+          <div className="flex-1 relative bg-slate-950/20">
+             <SpatialCanvas />
+             <div className="absolute bottom-4 left-4 right-4 z-20 flex gap-4">
+                <div className="flex-1 glass-panel p-4 rounded-2xl border-white/5 shadow-2xl backdrop-blur-2xl">
+                   <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-0.5">Economic Status</p>
+                        <h4 className="text-xs font-bold text-white">Sovereign Yield: High</h4>
+                      </div>
+                      <TrendingUp size={12} className="text-green-400" />
+                   </div>
+                   <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden mb-2">
+                      <div className="bg-indigo-500 h-full w-4/5"></div>
+                   </div>
+                   <p className="text-[9px] text-slate-400 leading-tight">Mesh is self-sustaining. Yields optimized via Neural Atlas layer.</p>
+                </div>
+             </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-4 glass-panel rounded-3xl p-6 flex flex-col gap-5 relative overflow-hidden h-[400px] lg:h-[500px]">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-blue-600/20 text-blue-400 rounded-xl">
+              <BrainCircuit size={20} />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white leading-none">Sustainability Audit</h3>
+              <p className="text-[9px] font-black text-blue-500/80 uppercase tracking-widest mt-1">AI-Core Operational</p>
             </div>
           </div>
-          <div className="flex-1 relative bg-[#020617]">
-             <SpatialCanvas />
+          <div className="flex-1 bg-slate-950/40 p-4 rounded-2xl border border-white/5 overflow-y-auto custom-scrollbar shadow-inner relative">
+            <div className="text-[12px] text-slate-300 leading-relaxed font-medium whitespace-pre-wrap">
+              {loadingInsight ? (
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
+                  <Sparkles size={24} className="text-blue-500 animate-pulse" />
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Auditing Mesh Sustainability...</p>
+                </div>
+              ) : aiInsight}
+            </div>
           </div>
-        </div>
-
-        {/* Gemini AI Intelligence Sidebar */}
-        <div className="bg-blue-600/5 border border-blue-500/20 rounded-2xl p-6 flex flex-col gap-4 relative overflow-hidden">
-          <div className="absolute -right-4 -top-4 opacity-10">
-            <Sparkles size={120} className="text-blue-400" />
-          </div>
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="text-blue-400" size={20} />
-            <h3 className="font-bold text-blue-100 uppercase tracking-widest text-xs">AI Strategy Unit</h3>
-          </div>
-          <div className="bg-slate-950/50 p-4 rounded-xl border border-blue-500/10 flex-1 overflow-y-auto font-mono text-sm text-blue-100 leading-relaxed whitespace-pre-wrap">
-            {loadingInsight ? (
-              <div className="flex flex-col items-center justify-center h-full gap-3">
-                <RefreshCcw className="animate-spin text-blue-500" size={32} />
-                <p className="text-blue-400/60 animate-pulse uppercase tracking-widest text-[10px]">Analyzing Mesh Integrity...</p>
-              </div>
-            ) : aiInsight}
-          </div>
-          <button 
-            onClick={() => window.alert('Opening detailed strategy portal...')}
-            className="w-full py-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 rounded-xl font-bold transition-all text-xs uppercase tracking-widest"
+          <Link 
+            to={`/${AppRoute.ATLAS}`}
+            className="group flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all"
           >
-            Explore Neural Strategy
-          </button>
-        </div>
-      </div>
-
-      {/* Network Load Graph */}
-      <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6">
-        <h3 className="font-bold text-slate-400 uppercase tracking-widest text-xs mb-6 flex items-center gap-2">
-          <Activity size={14} className="text-blue-500" />
-          Synchronized Mesh Throughput
-        </h3>
-        <div className="h-[250px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={mockData}>
-              <defs>
-                <linearGradient id="colorLoad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
-              <XAxis dataKey="time" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }}
-                itemStyle={{ color: '#60a5fa' }}
-              />
-              <Area type="monotone" dataKey="load" stroke="#3b82f6" fillOpacity={1} fill="url(#colorLoad)" strokeWidth={3} />
-            </AreaChart>
-          </ResponsiveContainer>
+            <div className="flex items-center gap-2">
+              <Sparkles size={16} className="text-indigo-400" />
+              <span className="text-[11px] font-bold text-white">Semantic Atlas Layer</span>
+            </div>
+            <ChevronRight size={14} className="text-slate-500 group-hover:translate-x-1 transition-transform" />
+          </Link>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@
   "description": "The backbone of spatial awareness mapping and digital identity expansion. A decentralized network for sovereign digital mapping across all capable devices.",
   "requestFramePermissions": [
     "camera",
+    "microphone",
     "geolocation"
   ]
 }
