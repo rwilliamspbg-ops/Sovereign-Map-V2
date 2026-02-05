@@ -1,6 +1,6 @@
 # SovereignMap: Neural Mesh
 
-![SovereignMap Header](https://img.shields.io/badge/Status-Mainnet--Ready-blue?style=for-the-badge&logo=google-cloud)
+![SovereignMap Header](https://img.shields.io/badge/-Testnet--Ready-blue?style=for-the-badge&logo=google-cloud)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 ![AI-Powered](https://img.shields.io/badge/Intelligence-Gemini--Pro--Neural-indigo?style=for-the-badge)
 
