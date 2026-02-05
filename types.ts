@@ -43,6 +43,15 @@ export interface GovernanceProposal {
   votes: number;
 }
 
+export interface SovereignIdentity {
+  alias: string;
+  worldIdVerified: boolean;
+  stakedMovement: number; // $SOV earned via Proof of Movement
+  reputation: number;
+  hapticLinkActive: boolean;
+  did: string;
+}
+
 export enum AppRoute {
   DASHBOARD = 'dashboard',
   NETWORK = 'network',

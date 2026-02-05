@@ -16,8 +16,10 @@ const SpatialCanvas: React.FC<SpatialCanvasProps> = ({ isDroneView = false }) =>
   const controlsRef = useRef<OrbitControls | null>(null);
   const composerRef = useRef<EffectComposer | null>(null);
   const scannerLightRef = useRef<THREE.PointLight | null>(null);
+  const movementBeaconRef = useRef<THREE.PointLight | null>(null);
+  const userPathRef = useRef<THREE.Line | null>(null);
+  const userPointsRef = useRef<THREE.Vector3[]>([]);
 
-  // Transition Camera based on View Mode
   useEffect(() => {
     if (!cameraRef.current) return;
     const targetPos = isDroneView ? new THREE.Vector3(120, 40, 180) : new THREE.Vector3(350, 250, 500);
@@ -26,7 +28,7 @@ const SpatialCanvas: React.FC<SpatialCanvasProps> = ({ isDroneView = false }) =>
     let alpha = 0;
     const animateCamera = () => {
       alpha += 0.015;
-      const easedAlpha = 1 - Math.pow(1 - alpha, 3); // Cubic ease-out
+      const easedAlpha = 1 - Math.pow(1 - alpha, 3);
       cameraRef.current?.position.lerpVectors(startPos, targetPos, Math.min(easedAlpha, 1));
       if (alpha < 1) requestAnimationFrame(animateCamera);
     };
@@ -40,19 +42,19 @@ const SpatialCanvas: React.FC<SpatialCanvasProps> = ({ isDroneView = false }) =>
     const height = window.innerHeight;
 
     const scene = new THREE.Scene();
-    // Volumetric Fog for deep atmospheric immersion
-    scene.fog = new THREE.FogExp2(0x020617, 0.0012);
+    scene.background = new THREE.Color(0x020617);
+    scene.fog = new THREE.FogExp2(0x020617, 0.0006);
 
-    const camera = new THREE.PerspectiveCamera(65, width / height, 1, 5000);
+    const camera = new THREE.PerspectiveCamera(65, width / height, 1, 10000);
     camera.position.set(350, 250, 500);
     cameraRef.current = camera;
 
     const renderer = new THREE.WebGLRenderer({ 
-      antialias: false, // Antialiasing handled by post-processing/limited pixel ratio
+      antialias: false,
       alpha: true,
       powerPreference: "high-performance" 
     });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Optimized for performance
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(width, height);
     renderer.toneMapping = THREE.ReinhardToneMapping;
     renderer.toneMappingExposure = 1.2;
@@ -60,168 +62,145 @@ const SpatialCanvas: React.FC<SpatialCanvasProps> = ({ isDroneView = false }) =>
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.04;
+    controls.dampingFactor = 0.05;
     controls.autoRotate = !isDroneView;
-    controls.autoRotateSpeed = 0.3;
+    controls.autoRotateSpeed = 0.15;
     controlsRef.current = controls;
 
-    // --- POST PROCESSING (AO) ---
+    // --- POST PROCESSING (REFINED SSAO) ---
     const composer = new EffectComposer(renderer);
     const renderPass = new RenderPass(scene, camera);
     composer.addPass(renderPass);
 
+    // Fine-tuned SSAO for deep occlusion in the mesh environment
     const ssaoPass = new SSAOPass(scene, camera, width, height);
-    ssaoPass.kernelRadius = 16;
-    ssaoPass.minDistance = 0.001;
-    ssaoPass.maxDistance = 0.1;
+    ssaoPass.kernelRadius = 48; // Increased for broader shadows
+    ssaoPass.minDistance = 0.001; 
+    ssaoPass.maxDistance = 0.15;
     ssaoPass.output = SSAOPass.OUTPUT.Default;
     composer.addPass(ssaoPass);
     composerRef.current = composer;
 
-    // --- ENHANCED LIGHTING ---
-    const ambientLight = new THREE.AmbientLight(0x1e293b, 0.4);
+    // --- LIGHTING ---
+    const ambientLight = new THREE.AmbientLight(0x3b82f6, 0.1);
     scene.add(ambientLight);
 
-    const mainLight = new THREE.DirectionalLight(0x3b82f6, 1.5);
-    mainLight.position.set(500, 1000, 500);
-    scene.add(mainLight);
-
-    // Dynamic Scanner Light (Pulse)
-    const scannerLight = new THREE.PointLight(0x3b82f6, 0, 800);
-    scannerLight.position.y = -90;
+    const scannerLight = new THREE.PointLight(0x3b82f6, 0, 2500);
     scene.add(scannerLight);
     scannerLightRef.current = scannerLight;
 
-    // --- RECTIVE GROUND PLANE ---
-    const groundGeom = new THREE.PlaneGeometry(3000, 3000, 64, 64);
-    const groundMat = new THREE.MeshPhysicalMaterial({
-      color: 0x0a0f1d,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.15,
-      metalness: 0.8,
-      roughness: 0.2,
-      side: THREE.DoubleSide
-    });
-    const ground = new THREE.Mesh(groundGeom, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -100;
-    scene.add(ground);
+    const movementBeacon = new THREE.PointLight(0x60a5fa, 0, 400);
+    scene.add(movementBeacon);
+    movementBeaconRef.current = movementBeacon;
 
-    // Grid Overlay
-    const grid = new THREE.GridHelper(3000, 60, 0x1e293b, 0x0f172a);
-    grid.position.y = -99.9;
-    scene.add(grid);
+    // --- DATA DUST ---
+    const dustCount = 3000;
+    const dustGeom = new THREE.BufferGeometry();
+    const dustPositions = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount; i++) {
+      dustPositions[i * 3] = (Math.random() - 0.5) * 5000;
+      dustPositions[i * 3 + 1] = (Math.random() - 0.5) * 2500;
+      dustPositions[i * 3 + 2] = (Math.random() - 0.5) * 5000;
+    }
+    dustGeom.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3));
+    const dustMat = new THREE.PointsMaterial({
+      color: 0x3b82f6,
+      size: 1.2,
+      transparent: true,
+      opacity: 0.25,
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: true
+    });
+    const dust = new THREE.Points(dustGeom, dustMat);
+    scene.add(dust);
+
+    // --- STRUCTURAL MONOLITHS (Shadow Catchers for SSAO) ---
+    const monoGeom = new THREE.BoxGeometry(40, 600, 40);
+    const monoMat = new THREE.MeshPhysicalMaterial({
+      color: 0x0f172a,
+      roughness: 0.2,
+      metalness: 0.8,
+      transparent: true,
+      opacity: 0.5
+    });
+
+    for (let i = 0; i < 12; i++) {
+      const mono = new THREE.Mesh(monoGeom, monoMat);
+      const angle = (i / 12) * Math.PI * 2;
+      const radius = 1200 + Math.random() * 400;
+      mono.position.set(
+        Math.cos(angle) * radius,
+        150,
+        Math.sin(angle) * radius
+      );
+      mono.rotation.y = Math.random() * Math.PI;
+      scene.add(mono);
+    }
+
+    // --- PERSONAL KINETIC PATH ---
+    const pathMat = new THREE.LineBasicMaterial({ 
+      color: 0x60a5fa, 
+      transparent: true, 
+      opacity: 0.6,
+      linewidth: 2 
+    });
+    const pathGeom = new THREE.BufferGeometry();
+    const userPath = new THREE.Line(pathGeom, pathMat);
+    scene.add(userPath);
+    userPathRef.current = userPath;
 
     // --- CRYSTALLINE MESH NODES ---
     const nodesGroup = new THREE.Group();
-    const nodeGeom = new THREE.IcosahedronGeometry(8, 2);
-    
-    // High-quality Physical Material
+    const nodeGeom = new THREE.IcosahedronGeometry(10, 2);
     const nodeMat = new THREE.MeshPhysicalMaterial({ 
       color: 0x3b82f6, 
       emissive: 0x1d4ed8, 
-      emissiveIntensity: 1.2,
-      metalness: 0.95,
-      roughness: 0.05,
+      emissiveIntensity: 0.8,
+      metalness: 0.9,
+      roughness: 0.1,
       transmission: 0.4,
-      thickness: 3,
+      ior: 1.5,
+      thickness: 1,
+      iridescence: 1,
+      iridescenceIOR: 1.3,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.1,
       transparent: true,
-      opacity: 0.9,
-      envMapIntensity: 1
+      opacity: 0.7
     });
 
-    const shieldGeom = new THREE.SphereGeometry(12, 16, 16);
-    const shieldMat = new THREE.MeshBasicMaterial({ 
-      color: 0x3b82f6, 
-      wireframe: true, 
-      transparent: true, 
-      opacity: 0.03 
-    });
-
-    for (let i = 0; i < 24; i++) {
-      const nodeWrap = new THREE.Group();
-      const nodeMesh = new THREE.Mesh(nodeGeom, nodeMat.clone()); // Unique material per node for pulse effects
-      const shieldMesh = new THREE.Mesh(shieldGeom, shieldMat);
-      
-      nodeWrap.add(nodeMesh);
-      nodeWrap.add(shieldMesh);
-      
-      const angle = (i / 24) * Math.PI * 2;
-      const radius = 350 + Math.random() * 550;
-      nodeWrap.position.set(
+    for (let i = 0; i < 45; i++) {
+      const node = new THREE.Mesh(nodeGeom, nodeMat.clone());
+      const angle = (i / 45) * Math.PI * 2;
+      const radius = 500 + Math.random() * 900;
+      node.position.set(
         Math.cos(angle) * radius,
-        Math.random() * 250 - 25,
+        Math.random() * 400 - 150,
         Math.sin(angle) * radius
       );
-      
-      const s = 0.6 + Math.random() * 1.4;
-      nodeWrap.scale.set(s, s, s);
-      
-      nodesGroup.add(nodeWrap);
+      node.scale.setScalar(0.8 + Math.random() * 1.5);
+      nodesGroup.add(node);
     }
     scene.add(nodesGroup);
 
-    // --- NEURAL PATHWAYS ---
-    const lineMat = new THREE.LineBasicMaterial({ 
-      color: 0x3b82f6, 
-      transparent: true, 
-      opacity: 0.12 
-    });
-    
-    const createConnections = () => {
-      const lineGeom = new THREE.BufferGeometry();
-      const linePos = [];
-      const children = nodesGroup.children;
-      for (let i = 0; i < children.length; i++) {
-        for (let j = i + 1; j < children.length; j++) {
-          const dist = children[i].position.distanceTo(children[j].position);
-          if (dist < 450) {
-            linePos.push(children[i].position.x, children[i].position.y, children[i].position.z);
-            linePos.push(children[j].position.x, children[j].position.y, children[j].position.z);
-          }
+    // --- NEURAL FILAMENTS ---
+    const filaments = new THREE.Group();
+    const filMat = new THREE.LineBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.05 });
+    nodesGroup.children.forEach((n1, i) => {
+      nodesGroup.children.slice(i + 1).forEach(n2 => {
+        if (n1.position.distanceTo(n2.position) < 450) {
+          const g = new THREE.BufferGeometry().setFromPoints([n1.position, n2.position]);
+          filaments.add(new THREE.Line(g, filMat));
         }
-      }
-      lineGeom.setAttribute('position', new THREE.Float32BufferAttribute(linePos, 3));
-      return new THREE.LineSegments(lineGeom, lineMat);
-    };
-    
-    const connections = createConnections();
-    scene.add(connections);
-
-    // --- VOLUMETRIC SCANNER ---
-    const scannerGeom = new THREE.TorusGeometry(1, 0.4, 16, 100);
-    const scannerMat = new THREE.MeshBasicMaterial({ 
-      color: 0x60a5fa, 
-      transparent: true, 
-      opacity: 0.6 
+      });
     });
-    const scanner = new THREE.Mesh(scannerGeom, scannerMat);
-    scanner.rotation.x = Math.PI / 2;
-    scanner.position.y = -98;
-    scene.add(scanner);
+    scene.add(filaments);
 
-    // --- STARFIELD ---
-    const starsGeom = new THREE.BufferGeometry();
-    const starCount = 3000;
-    const starPos = new Float32Array(starCount * 3);
-    for (let i = 0; i < starCount; i++) {
-      starPos[i * 3] = (Math.random() - 0.5) * 5000;
-      starPos[i * 3 + 1] = (Math.random() - 0.5) * 2500;
-      starPos[i * 3 + 2] = (Math.random() - 0.5) * 5000;
-    }
-    starsGeom.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-    const starMat = new THREE.PointsMaterial({ 
-      color: 0xffffff, 
-      size: 1.2, 
-      transparent: true, 
-      opacity: 0.35,
-      sizeAttenuation: true 
-    });
-    const stars = new THREE.Points(starsGeom, starMat);
-    scene.add(stars);
+    // --- GRID ---
+    const grid = new THREE.GridHelper(6000, 60, 0x1e293b, 0x0f172a);
+    grid.position.y = -200;
+    scene.add(grid);
 
-    // --- ANIMATION ---
     const clock = new THREE.Clock();
     let frameId: number;
 
@@ -229,54 +208,57 @@ const SpatialCanvas: React.FC<SpatialCanvasProps> = ({ isDroneView = false }) =>
       frameId = requestAnimationFrame(animate);
       const time = clock.getElapsedTime();
 
-      // Scanner Ring Pulse
-      const scanCycle = (time % 6) / 6;
-      const scanRadius = scanCycle * 1800;
-      scanner.scale.set(scanRadius, scanRadius, 1);
-      scanner.material.opacity = Math.pow(1 - scanCycle, 2) * 0.7;
-      
-      if (scannerLightRef.current) {
-        scannerLightRef.current.intensity = scanner.material.opacity * 30;
-        scannerLightRef.current.distance = scanRadius + 250;
+      // Kinetic Movement Staking Simulation
+      if (time % 1.5 < 0.02) {
+        const last = userPointsRef.current[userPointsRef.current.length - 1] || new THREE.Vector3(0, 0, 0);
+        const next = last.clone().add(new THREE.Vector3(
+          (Math.random() - 0.5) * 40,
+          Math.sin(time * 0.5) * 5,
+          (Math.random() - 0.5) * 40
+        ));
+        userPointsRef.current.push(next);
+        if (userPointsRef.current.length > 120) userPointsRef.current.shift();
+        userPathRef.current?.geometry.setFromPoints(userPointsRef.current);
+        
+        // Update Beacon to Head of Path
+        if (movementBeaconRef.current) {
+          movementBeaconRef.current.position.copy(next);
+          movementBeaconRef.current.intensity = 15 + Math.sin(time * 4) * 5;
+        }
       }
 
-      // Nodes kinetic behavior
-      nodesGroup.children.forEach((wrap, i) => {
-        const node = wrap.children[0] as THREE.Mesh;
-        const shield = wrap.children[1] as THREE.Mesh;
-        
-        node.rotation.y += 0.004 + (i * 0.0001);
-        node.rotation.x += 0.001;
-        wrap.position.y += Math.sin(time * 0.4 + i) * 0.15;
-        
-        const pulse = Math.sin(time * 1.5 + i) * 0.5 + 0.5;
-        (node.material as THREE.MeshPhysicalMaterial).emissiveIntensity = 0.8 + pulse * 1.5;
-        shield.rotation.z -= 0.008;
-        shield.scale.setScalar(1 + pulse * 0.08);
+      // Scanner Pulse Intensity
+      const pulse = (time % 4) / 4;
+      if (scannerLightRef.current) {
+        scannerLightRef.current.intensity = (1 - pulse) * 40;
+        scannerLightRef.current.distance = pulse * 2000;
+        scannerLightRef.current.position.set(0, Math.sin(time) * 150, 0);
+      }
+
+      // Node Rotation and Bloom
+      nodesGroup.children.forEach((node: any, i) => {
+        node.rotation.x += 0.005;
+        node.rotation.z += 0.005;
+        node.position.y += Math.sin(time * 0.6 + i) * 0.15;
+        node.material.emissiveIntensity = 0.5 + Math.abs(Math.sin(time + i)) * 1.5;
+        node.material.opacity = 0.6 + Math.sin(time * 0.5 + i) * 0.1;
       });
 
-      stars.rotation.y += 0.00005;
-      ground.position.y = -100 + Math.sin(time * 0.25) * 0.4;
+      // Dust Swirl
+      dust.rotation.y += 0.0002;
 
       controls.update();
-      
-      // Use composer instead of renderer directly for AO
-      if (composerRef.current) {
-        composerRef.current.render();
-      } else {
-        renderer.render(scene, camera);
-      }
+      if (composerRef.current) composerRef.current.render();
+      else renderer.render(scene, camera);
     };
 
     animate();
 
     const handleResize = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      camera.aspect = w / h;
+      camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-      composer.setSize(w, h);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      composer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
 

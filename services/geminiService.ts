@@ -39,7 +39,7 @@ async function callGeminiWithRetry(
   }
   
   if (lastError?.message?.includes("429")) {
-    return "The Mesh Intelligence is currently at peak capacity (Quota Exceeded). Please recalibrate in a few moments to restore full neural analysis.";
+    return "The Mesh Intelligence is currently at peak capacity (Quota Exceeded). Local Edge-Models are maintaining basic mesh integrity.";
   }
   
   return null;
@@ -49,7 +49,7 @@ export const checkApiHealth = async (): Promise<boolean> => {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-flash-lite-latest',
       contents: 'ping',
       config: { maxOutputTokens: 5 }
     });
@@ -65,9 +65,9 @@ export const determineDefenseManeuver = async (threatVector: string, intensity: 
   Choose the best autonomous action: (Isolation, Signal-Scrambling, Consensus-Migration, or Stealth-Cycle). 
   Provide a tactical justification for the choice.`;
 
-  const systemInstruction = "You are the SovereignMap Tactical Defense Engine. You make split-second decisions for autonomous nodes. Be brief, technical, and prioritize network survival.";
+  const systemInstruction = "You are the SovereignMap Tactical Defense Engine (Edge Inference v4). You make split-second decisions for autonomous nodes. Be brief, technical, and prioritize network survival.";
   
-  return await callGeminiWithRetry('gemini-3-flash-preview', prompt, systemInstruction);
+  return await callGeminiWithRetry('gemini-flash-lite-latest', prompt, systemInstruction);
 };
 
 export const classifySpatialObject = async (imageDataBase64: string, meshContext: string) => {
@@ -78,7 +78,7 @@ export const classifySpatialObject = async (imageDataBase64: string, meshContext
     Assess if these objects are registered in the local sovereign mesh or are anonymous 'ghost' entities.` }
   ];
 
-  const systemInstruction = "You are a Spatial Intelligence Unit. You identify objects in 3D space and correlate them with decentralized identity registries. Be precise and technically focused.";
+  const systemInstruction = "You are a Spatial Intelligence Unit running on Edge-Silicon. You identify objects in 3D space and correlate them with decentralized identity registries. Be precise and technically focused.";
   
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
@@ -126,7 +126,7 @@ export const planAutonomousMission = async (origin: string, destination: string,
 
 export const generateAtlasSynthesis = async (sector: string) => {
   const prompt = `Synthesize a semantic topological report for Sector ${sector}. Identify key landmarks, mesh density bottlenecks, and spatial sovereign potential.`;
-  return await callGeminiWithRetry('gemini-3-flash-preview', prompt);
+  return await callGeminiWithRetry('gemini-flash-lite-latest', prompt);
 };
 
 export const generateGovernanceProposals = async (health: number) => {
@@ -140,6 +140,6 @@ export const generateStakingAdvisory = async (address: string) => {
 };
 
 export const generateSovereignNarrative = async (alias: string) => {
-  const prompt = `Generate a short futuristic briefing for Node Operator ${alias} about their current sector's status in the digital sovereignty mesh, including a note about the new Web3 spatial staking layers.`;
-  return await callGeminiWithRetry('gemini-3-flash-preview', prompt);
+  const prompt = `Generate a short futuristic briefing for Node Operator ${alias} about their current sector's status in the digital sovereignty mesh, including a note about the new Web3 spatial staking layers and World-ID verification status.`;
+  return await callGeminiWithRetry('gemini-flash-lite-latest', prompt);
 };

@@ -15,7 +15,8 @@ import {
   Target,
   Box,
   User,
-  Plane
+  Plane,
+  Waves
 } from 'lucide-react';
 import { classifySpatialObject } from '../services/geminiService';
 
@@ -40,19 +41,18 @@ const UplinkView: React.FC = () => {
     let interval: number;
     if (isScanning) {
       interval = window.setInterval(() => {
-        // Simulate real-time object detection
-        const types: DetectedObject['type'][] = ['Humanoid', 'Drone', 'Obstacle'];
+        const types: DetectedObject['type'][] = ['Humanoid', 'Drone', 'Obstacle', 'Ghost'];
         const type = types[Math.floor(Math.random() * types.length)];
         const newObj: DetectedObject = {
-          id: `OBJ-${Math.floor(Math.random() * 999)}`,
+          id: `SOV-${Math.floor(Math.random() * 999)}`,
           type,
           label: `${type} Alpha`,
-          confidence: 0.85 + Math.random() * 0.1,
-          status: Math.random() > 0.4 ? 'Verified' : 'Unregistered',
-          pos: { x: 20 + Math.random() * 60, y: 20 + Math.random() * 60 }
+          confidence: 0.88 + Math.random() * 0.1,
+          status: Math.random() > 0.3 ? 'Verified' : 'Unregistered',
+          pos: { x: 15 + Math.random() * 70, y: 15 + Math.random() * 70 }
         };
-        setDetectedObjects(prev => [newObj, ...prev].slice(0, 3));
-      }, 3000);
+        setDetectedObjects(prev => [newObj, ...prev].slice(0, 4));
+      }, 2500);
     } else {
       setDetectedObjects([]);
     }
@@ -64,11 +64,9 @@ const UplinkView: React.FC = () => {
     setStatus('idle');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
+      if (videoRef.current) videoRef.current.srcObject = stream;
     } catch (err) {
-      console.error("Camera access denied", err);
+      console.error("Spatial scan failed: Camera access restricted.", err);
       setIsScanning(false);
     }
   };
@@ -89,18 +87,9 @@ const UplinkView: React.FC = () => {
     ctx.drawImage(videoRef.current, 0, 0);
     
     const base64 = canvasRef.current.toDataURL('image/jpeg').split(',')[1];
-    addToast("Mesh Oracle analyzing spatial entities...");
     try {
-      const analysis = await classifySpatialObject(base64, "Sector 7-G Urban Mesh");
-      console.log("Spatial Intelligence:", analysis);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const addToast = (msg: string) => {
-    // Simple toast or log mechanism if needed
-    console.log(msg);
+      await classifySpatialObject(base64, "High-Density Spatial Mesh Sector 7");
+    } catch (e) { console.error("Neural analysis timed out.", e); }
   };
 
   const handleUplink = () => {
@@ -113,197 +102,155 @@ const UplinkView: React.FC = () => {
           setStatus('complete');
           return 100;
         }
-        return prev + 5;
+        return prev + 4;
       });
-    }, 150);
+    }, 120);
   };
 
   return (
-    <div className="space-y-10 max-w-5xl mx-auto animate-in fade-in duration-700">
+    <div className="space-y-10 max-w-6xl mx-auto animate-in fade-in duration-700 pb-20">
       <header className="text-center space-y-4">
-        <div className="inline-flex items-center gap-2 bg-blue-600/10 text-blue-400 px-4 py-1.5 rounded-full border border-blue-500/20 text-[10px] font-black uppercase tracking-widest">
-           Sovereign Data Contribution
+        <div className="inline-flex items-center gap-2 bg-blue-600/10 text-blue-400 px-5 py-2 rounded-full border border-blue-500/20 text-[10px] font-black uppercase tracking-widest">
+           <Waves size={12} className="animate-pulse" /> Kinetic Data Contribution v2.6
         </div>
-        <h2 className="text-4xl font-extrabold tracking-tight text-white">Network Uplink</h2>
+        <h2 className="text-4xl font-black tracking-tighter text-white uppercase">Sovereign Uplink</h2>
         <p className="text-slate-400 max-w-xl mx-auto text-sm leading-relaxed">
-          Propagate spatial telemetry to the mesh. Our SLAM engine identifies objects and verifies their DIDs simultaneously.
+          Propagate your kinetic path and spatial telemetry to the mesh. Verification occurs in real-time across the neural backbone.
         </p>
       </header>
 
-      <div className="glass-panel rounded-[3rem] overflow-hidden shadow-3xl border-white/5 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-600/5 to-transparent pointer-events-none"></div>
-        
-        <div className="p-2 flex bg-slate-900/60 m-4 rounded-[2rem]">
+      <div className="glass-panel rounded-[3.5rem] overflow-hidden shadow-3xl border-white/5 relative">
+        <div className="p-2 flex bg-slate-900/60 m-6 rounded-[2.5rem] border border-white/5">
           <button 
-            className={`flex-1 py-4 font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all rounded-[1.6rem] ${!isScanning ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500 hover:text-slate-300'}`}
+            className={`flex-1 py-4 font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all rounded-[2.2rem] ${!isScanning ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/40' : 'text-slate-500 hover:text-slate-300'}`}
             onClick={() => { if (isScanning) stopScan(); }}
           >
-            <UploadCloud size={18} /> Static Payload
+            <UploadCloud size={18} /> Static Manifest
           </button>
           <button 
-            className={`flex-1 py-4 font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all rounded-[1.6rem] ${isScanning ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-500 hover:text-slate-300'}`}
+            className={`flex-1 py-4 font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all rounded-[2.2rem] ${isScanning ? 'bg-blue-600 text-white shadow-xl shadow-blue-900/40' : 'text-slate-500 hover:text-slate-300'}`}
             onClick={startScan}
           >
-            <Scan size={18} /> Live Spatial Scan
+            <Scan size={18} /> Spatial Kinetic Scan
           </button>
         </div>
 
-        <div className="p-10">
+        <div className="p-8">
           {isScanning ? (
             <div className="space-y-8 animate-in zoom-in-95 duration-500">
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                <div className="lg:col-span-3 relative aspect-video bg-black/40 rounded-[2.5rem] overflow-hidden group border border-white/10 shadow-inner">
-                  <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover opacity-80" />
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <div className="lg:col-span-3 relative aspect-video bg-black/60 rounded-[3rem] overflow-hidden border border-white/10 shadow-inner group">
+                  <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-1000" />
                   <canvas ref={canvasRef} className="hidden" />
 
-                  {/* OBJECT AWARENESS HUD */}
                   {detectedObjects.map(obj => (
                     <div 
                       key={obj.id} 
-                      className="absolute border-2 rounded-xl transition-all duration-500 flex flex-col items-start p-2 pointer-events-none"
+                      className="absolute border-2 rounded-2xl transition-all duration-700 flex flex-col items-start p-3 pointer-events-none backdrop-blur-sm"
                       style={{ 
                         left: `${obj.pos.x}%`, 
                         top: `${obj.pos.y}%`, 
-                        width: '120px', 
-                        height: '80px',
+                        width: '140px', 
+                        height: '90px',
                         borderColor: obj.status === 'Verified' ? 'rgba(34, 197, 94, 0.6)' : 'rgba(239, 68, 68, 0.6)',
-                        backgroundColor: obj.status === 'Verified' ? 'rgba(34, 197, 94, 0.05)' : 'rgba(239, 68, 68, 0.05)'
+                        backgroundColor: obj.status === 'Verified' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)'
                       }}
                     >
-                      <div className="flex items-center gap-1.5 mb-1">
-                        {obj.type === 'Humanoid' && <User size={12} className="text-white" />}
-                        {obj.type === 'Drone' && <Plane size={12} className="text-white" />}
-                        {obj.type === 'Obstacle' && <Target size={12} className="text-white" />}
-                        <span className="text-[8px] font-black text-white uppercase">{obj.type}</span>
+                      <div className="flex items-center gap-2 mb-2">
+                        {obj.type === 'Humanoid' && <User size={14} className="text-white" />}
+                        {obj.type === 'Drone' && <Plane size={14} className="text-white" />}
+                        <span className="text-[10px] font-black text-white uppercase">{obj.type}</span>
                       </div>
-                      <div className={`text-[7px] font-black uppercase px-1.5 py-0.5 rounded-sm ${obj.status === 'Verified' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
+                      <div className={`text-[8px] font-black uppercase px-2 py-1 rounded-md mb-2 ${obj.status === 'Verified' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
                         {obj.status}
                       </div>
-                      <div className="mt-auto flex justify-between w-full text-[6px] font-mono text-slate-300 uppercase">
-                         <span>CONF: {(obj.confidence * 100).toFixed(0)}%</span>
-                         <span>{obj.id}</span>
+                      <div className="mt-auto flex justify-between w-full text-[7px] font-mono text-slate-300 uppercase tracking-widest font-bold">
+                         <span>STAKE_MATCH: {(obj.confidence * 100).toFixed(0)}%</span>
                       </div>
                     </div>
                   ))}
                   
-                  {/* Modernized Scan HUD */}
-                  <div className="absolute inset-0 pointer-events-none p-12 flex items-center justify-center">
-                    <div className="relative w-full h-full border-2 border-blue-500/20 rounded-3xl">
-                      <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-blue-500 rounded-tl-3xl shadow-[0_0_15px_#3b82f6]"></div>
-                      <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-blue-500 rounded-tr-3xl shadow-[0_0_15px_#3b82f6]"></div>
-                      <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-blue-500 rounded-bl-3xl shadow-[0_0_15px_#3b82f6]"></div>
-                      <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-blue-500 rounded-br-3xl shadow-[0_0_15px_#3b82f6]"></div>
+                  <div className="absolute inset-0 pointer-events-none p-16">
+                    <div className="relative w-full h-full border border-blue-500/10 rounded-[3rem]">
+                      <div className="absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 border-blue-500 rounded-tl-[3rem] shadow-[0_0_20px_rgba(59,130,246,0.3)]"></div>
+                      <div className="absolute bottom-0 right-0 w-16 h-16 border-b-2 border-r-2 border-blue-500 rounded-br-[3rem] shadow-[0_0_20px_rgba(59,130,246,0.3)]"></div>
                     </div>
                   </div>
 
-                  <div className="absolute top-6 left-6 bg-red-600/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-red-500/30 text-[10px] font-black text-red-500 animate-pulse flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-red-500"></div> SENSOR LINK ACTIVE
+                  <div className="absolute top-8 left-8 bg-blue-600/20 backdrop-blur-xl px-5 py-2 rounded-full border border-blue-500/30 text-[10px] font-black text-blue-400 animate-pulse flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></div> KINETIC LINK ESTABLISHED
                   </div>
                   
                   <button 
                     onClick={captureAndClassify}
-                    className="absolute bottom-6 right-6 p-4 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-2xl transition-all active:scale-90"
+                    className="absolute bottom-8 right-8 p-5 bg-white text-slate-950 rounded-full shadow-3xl transition-all active:scale-90 hover:scale-110"
                   >
-                    <Zap size={20} />
+                    <Target size={24} />
                   </button>
                 </div>
 
-                {/* SLAM Engine Telemetry */}
-                <div className="lg:col-span-1 glass-panel p-6 rounded-[2rem] border-white/5 space-y-6 flex flex-col justify-center">
+                <div className="lg:col-span-1 glass-panel p-8 rounded-[3rem] border-white/5 space-y-8 flex flex-col justify-center bg-slate-950/40">
                    <div className="space-y-1">
-                      <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">SLAM Engine</p>
-                      <h4 className="text-sm font-bold text-white">ORB-SLAM3 v1.0</h4>
+                      <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Neural SLAM v2.6</p>
+                      <h4 className="text-lg font-bold text-white tracking-tight leading-none">Edge Logic Engine</h4>
                    </div>
-                   <div className="space-y-3">
+                   <div className="space-y-4">
                       {[
-                        { l: 'Object Detection', v: detectedObjects.length > 0 ? 'ACTIVE' : 'IDLE', c: 'text-green-400' },
-                        { l: 'Tracking', v: 'LOCKED', c: 'text-green-400' },
-                        { l: 'Loop Closure', v: 'ENABLED', c: 'text-blue-400' },
+                        { l: 'Mesh Synchronization', v: 'SYNCED', c: 'text-green-400' },
+                        { l: 'Kinetic Tracking', v: 'ACTIVE', c: 'text-blue-400' },
+                        { l: 'Oracle Feedback', v: 'NOMINAL', c: 'text-blue-400' },
                       ].map((s, i) => (
-                        <div key={i} className="flex justify-between p-2 bg-white/5 rounded-lg text-[9px] font-bold uppercase tracking-wider">
+                        <div key={i} className="flex justify-between p-3 bg-white/5 rounded-2xl border border-white/5 text-[10px] font-black uppercase tracking-wider group hover:bg-white/10 transition-colors">
                           <span className="text-slate-500">{s.l}</span>
                           <span className={s.c}>{s.v}</span>
                         </div>
                       ))}
                    </div>
-                   <div className="pt-4 border-t border-white/5">
-                      <div className="flex items-center gap-2 text-amber-400 text-[10px] font-black uppercase">
-                         <Target size={14} /> Spatial Continuity: 98%
+                   <div className="pt-6 border-t border-white/5">
+                      <div className="flex items-center gap-3 text-amber-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                         <Zap size={16} /> Movement Proof: OK
                       </div>
                    </div>
                 </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {[
-                  { l: 'Signal Quality', v: '98.2%', icon: <Wifi size={20} />, c: 'text-blue-400' },
-                  { l: 'Awareness Index', v: `${detectedObjects.length} Entities`, icon: <Box size={20} />, c: 'text-purple-400' },
-                  { l: 'Verification', v: 'Mutual DID Ready', icon: <ShieldCheck size={20} />, c: 'text-green-400' },
-                ].map((stat, i) => (
-                  <div key={i} className="glass-panel p-5 rounded-[1.8rem] flex items-center gap-5 border-white/5 bg-slate-900/40">
-                    <div className={`p-3 bg-slate-950 rounded-2xl ${stat.c}`}>
-                      {stat.icon}
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">{stat.l}</p>
-                      <p className="text-sm font-bold text-white">{stat.v}</p>
-                    </div>
-                  </div>
-                ))}
               </div>
 
               <button 
                 onClick={handleUplink}
                 disabled={status === 'uploading'}
-                className="w-full py-5 bg-white text-slate-950 hover:bg-slate-200 rounded-[2rem] font-black text-sm uppercase tracking-[0.25em] transition-all shadow-2xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+                className="w-full py-6 bg-white text-slate-950 hover:bg-slate-200 rounded-[2.5rem] font-black text-sm uppercase tracking-[0.3em] transition-all shadow-3xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-4"
               >
-                {status === 'uploading' ? <Loader2 className="animate-spin" /> : <Zap size={18} />}
-                {status === 'uploading' ? 'Committing Telemetry...' : 'Publish Spatial Data'}
+                {status === 'uploading' ? <Loader2 className="animate-spin" size={24} /> : <ShieldCheck size={24} />}
+                {status === 'uploading' ? 'Publishing Kinetic Mesh...' : 'Commit Movement to Blockchain'}
               </button>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-24 px-10 border-2 border-dashed border-white/5 rounded-[3rem] bg-slate-950/20 group hover:bg-slate-900/40 hover:border-blue-500/30 transition-all cursor-pointer">
-              <div className="w-24 h-24 bg-slate-900/60 rounded-[2.5rem] flex items-center justify-center mb-8 border border-white/5 group-hover:scale-110 transition-transform">
-                <UploadCloud className="text-slate-600 group-hover:text-blue-500 transition-colors" size={48} />
+            <div className="flex flex-col items-center justify-center py-32 px-10 border-2 border-dashed border-white/10 rounded-[3.5rem] bg-slate-950/20 group hover:bg-slate-900/40 hover:border-blue-500/40 transition-all cursor-pointer">
+              <div className="w-28 h-28 bg-slate-900/60 rounded-[3rem] flex items-center justify-center mb-10 border border-white/5 group-hover:scale-110 transition-transform shadow-2xl">
+                <Scan className="text-slate-600 group-hover:text-blue-400 transition-colors" size={56} />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Initialize Spatial Mesh</h3>
-              <p className="text-slate-500 text-sm mb-10 text-center max-w-sm leading-relaxed">
-                Connect your device to begin the sovereign mapping protocol. Verify surrounding entities and anchor their coordinates to the L1 mesh.
+              <h3 className="text-3xl font-black text-white mb-3 uppercase tracking-tighter">Initialize Mesh Scanners</h3>
+              <p className="text-slate-500 text-sm mb-12 text-center max-w-sm leading-relaxed font-medium">
+                Activate your spatial sensors to verify neighboring entities and begin staking your movement in the $SOV economy.
               </p>
-              <input type="file" id="file-upload" className="hidden" />
-              <label htmlFor="file-upload" className="px-10 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] cursor-pointer transition-all border border-white/5 active:scale-95">
-                 Load Manifest
-              </label>
+              <button className="px-12 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.3em] transition-all shadow-xl shadow-blue-900/40 active:scale-95">
+                 Synchronize Sensors
+              </button>
             </div>
           )}
         </div>
 
         {status !== 'idle' && (
-          <div className="p-10 border-t border-white/5 bg-slate-950/60 backdrop-blur-3xl animate-in slide-in-from-bottom-8 duration-500">
-            <div className="flex items-center justify-between mb-5">
-              <span className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-3">
-                {status === 'complete' ? <ShieldCheck className="text-green-500" /> : <Loader2 className="animate-spin text-blue-500" />}
-                {status === 'complete' ? 'Spatial Consistency Achieved' : 'Broadcasting Awareness Feed...'}
+          <div className="p-12 border-t border-white/5 bg-slate-950/80 backdrop-blur-3xl animate-in slide-in-from-bottom-10 duration-700">
+            <div className="flex items-center justify-between mb-6">
+              <span className="text-xs font-black text-white uppercase tracking-[0.3em] flex items-center gap-4">
+                {status === 'complete' ? <CheckCircle2 className="text-green-500" size={24} /> : <Loader2 className="animate-spin text-blue-500" size={24} />}
+                {status === 'complete' ? 'Consensus Achieved: Block #48291 Anchored' : 'Negotiating Peer Handshakes...'}
               </span>
-              <span className="text-[10px] font-black font-mono text-blue-400">{uplinkProgress}% Complete</span>
+              <span className="text-xs font-black font-mono text-blue-400 bg-blue-400/10 px-3 py-1 rounded-lg border border-blue-500/20">{uplinkProgress}% SYNC</span>
             </div>
-            <div className="h-3 bg-slate-900 rounded-full overflow-hidden shadow-inner p-0.5">
-               <div className="h-full bg-gradient-to-r from-blue-600 to-blue-400 rounded-full transition-all duration-300 shadow-[0_0_12px_rgba(59,130,246,0.5)]" style={{ width: `${uplinkProgress}%` }}></div>
+            <div className="h-4 bg-slate-950 rounded-full overflow-hidden shadow-inner p-1">
+               <div className="h-full bg-gradient-to-r from-blue-700 via-blue-500 to-indigo-500 rounded-full transition-all duration-300 shadow-[0_0_20px_rgba(59,130,246,0.6)]" style={{ width: `${uplinkProgress}%` }}></div>
             </div>
-            {status === 'complete' && (
-              <div className="mt-8 p-6 bg-green-500/5 border border-green-500/20 rounded-3xl flex items-center gap-5 group hover:bg-green-500/10 transition-all">
-                <div className="p-3 bg-green-500/10 text-green-500 rounded-2xl">
-                   <AlertCircle size={24} />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-green-100 mb-1">Mesh Sync Complete</p>
-                  <p className="text-xs text-green-400/80 leading-relaxed font-medium">
-                    {detectedObjects.length} surrounding objects mapped and verified. Sovereignty score boosted.
-                  </p>
-                </div>
-                <ChevronRight size={20} className="text-green-900 ml-auto" />
-              </div>
-            )}
           </div>
         )}
       </div>

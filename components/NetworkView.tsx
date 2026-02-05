@@ -20,7 +20,9 @@ import {
   Lock,
   Clock,
   BarChart3,
-  Waves
+  Waves,
+  Brain,
+  Wind
 } from 'lucide-react';
 import SpatialCanvas from './SpatialCanvas';
 import { SpatialNode } from '../types';
@@ -36,15 +38,16 @@ interface NodeUI extends SpatialNode {
 const NodeSignalHUD = ({ status }: { status: string }) => {
   const [points, setPoints] = useState<number[]>([]);
   const [strength, setStrength] = useState(90);
+  const [hapticIntensity, setHapticIntensity] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Initialize and update raw data points
   useEffect(() => {
-    setPoints(Array.from({ length: 24 }, () => 30 + Math.random() * 60));
+    setPoints(Array.from({ length: 32 }, () => 20 + Math.random() * 70));
     
     const interval = setInterval(() => {
       setPoints(prev => {
-        const next = [...prev.slice(1), 30 + Math.random() * 60];
+        const next = [...prev.slice(1), 20 + Math.random() * 70];
         return next;
       });
       // Fluctuate strength slightly
@@ -52,12 +55,14 @@ const NodeSignalHUD = ({ status }: { status: string }) => {
         const delta = (Math.random() - 0.5) * 4;
         return Math.max(70, Math.min(100, prev + delta));
       });
-    }, 800);
+      // Update Haptic Pulse
+      setHapticIntensity(Math.random() * 100);
+    }, 400);
     
     return () => clearInterval(interval);
   }, []);
 
-  // Canvas animation for a "Mini-Waveform"
+  // Canvas animation for a "Neural Pulse" Waveform
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -85,17 +90,24 @@ const NodeSignalHUD = ({ status }: { status: string }) => {
       
       points.forEach((p, i) => {
         const x = i * step;
-        const y = (height / 2) + Math.sin((frame * 0.05) + i) * (p / 4);
+        const jitter = Math.sin((frame * 0.1) + i) * (p / 8);
+        const y = (height / 2) + jitter;
         ctx.lineTo(x, y);
       });
       
       ctx.stroke();
       
-      // Glow effect
-      ctx.globalAlpha = 0.2;
-      ctx.lineWidth = 4;
+      // Secondary "Ghost" wave for depth
+      ctx.strokeStyle = color + '44';
+      ctx.beginPath();
+      ctx.moveTo(0, height / 2);
+      points.forEach((p, i) => {
+        const x = i * step;
+        const jitter = Math.cos((frame * 0.08) + i) * (p / 6);
+        const y = (height / 2) + jitter;
+        ctx.lineTo(x, y);
+      });
       ctx.stroke();
-      ctx.globalAlpha = 1.0;
 
       requestAnimationFrame(render);
     };
@@ -114,46 +126,40 @@ const NodeSignalHUD = ({ status }: { status: string }) => {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
-           <Waves size={12} className={status === 'active' ? 'text-blue-400' : 'text-slate-500'} />
-           <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Spectral Density</span>
+           <Brain size={12} className={status === 'active' ? 'text-blue-400' : 'text-slate-500'} />
+           <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Neural Resonance</span>
         </div>
         <div className={`px-2 py-0.5 rounded font-mono text-[9px] font-bold ${getThemeColor()}`}>
-           {strength.toFixed(1)}% SIG_STRENGTH
+           {strength.toFixed(1)}% SIGNAL
         </div>
       </div>
 
-      <div className="relative h-12 bg-slate-950/60 rounded-2xl border border-white/5 overflow-hidden group">
+      <div className="relative h-16 bg-slate-950/80 rounded-[1.5rem] border border-white/10 overflow-hidden group shadow-inner">
         <canvas 
           ref={canvasRef} 
           width={400} 
-          height={48} 
-          className="w-full h-full opacity-60 group-hover:opacity-100 transition-opacity"
+          height={64} 
+          className="w-full h-full opacity-70 group-hover:opacity-100 transition-opacity"
         />
         
-        {/* Multi-segment overlay bars */}
-        <div className="absolute inset-0 flex items-end justify-between px-2 py-1 gap-1 pointer-events-none">
-          {points.map((p, i) => (
-            <div 
-              key={i} 
-              className={`flex-1 rounded-t-[1px] transition-all duration-700 ${
-                status === 'active' ? 'bg-blue-500/10' : 
-                status === 'defending' ? 'bg-red-500/10' : 'bg-slate-500/10'
-              }`}
-              style={{ height: `${p}%` }}
-            />
-          ))}
+        {/* Haptic Strength Overlay */}
+        <div className="absolute top-0 right-0 p-3 flex flex-col items-end">
+           <div className="w-10 h-1 bg-slate-900 rounded-full overflow-hidden">
+              <div className="h-full bg-blue-500 transition-all duration-300" style={{ width: `${hapticIntensity}%` }}></div>
+           </div>
+           <span className="text-[7px] text-slate-600 font-black mt-1 uppercase">Haptic_Sync</span>
         </div>
       </div>
 
       <div className="flex justify-between text-[7px] font-mono text-slate-600 uppercase tracking-tighter">
-        <div className="flex gap-2">
-          <span>jitter: <span className="text-slate-400">{(Math.random() * 2).toFixed(2)}ms</span></span>
-          <span>packet_loss: <span className="text-slate-400">0.00%</span></span>
+        <div className="flex gap-3">
+          <span>bio_jitter: <span className="text-blue-400/80">{(Math.random() * 0.5).toFixed(3)}ms</span></span>
+          <span>quantum_drift: <span className="text-purple-400/80">stable</span></span>
         </div>
-        <span>neural_verified_v1</span>
+        <span className="flex items-center gap-1"><Wind size={8} /> haptic_ready_v4</span>
       </div>
     </div>
   );
@@ -165,13 +171,13 @@ const NetworkView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const nodes: NodeUI[] = useMemo(() => [
-    { id: 'LDN-01', lat: 51.5, lng: -0.1, intensity: 0.8, location: 'London', region: 'Europe', status: 'active', latency: '42ms', throughput: '850GB/s', health: 98, label: 'London Node', encryption: 'Quantum-Resistant', discoveredAt: Date.now() - 3600000 * 24 },
-    { id: 'NYC-04', lat: 40.7, lng: -74.0, intensity: 0.9, location: 'New York', region: 'North America', status: 'active', latency: '12ms', throughput: '1.2TB/s', health: 100, label: 'NY Node', encryption: 'Quantum-Resistant', discoveredAt: Date.now() - 3600000 * 5 },
-    { id: 'TKO-09', lat: 35.6, lng: 139.6, intensity: 0.5, location: 'Tokyo', region: 'Asia', status: 'syncing', latency: '158ms', throughput: '240GB/s', health: 65, label: 'Tokyo Node', encryption: 'AES-256', discoveredAt: Date.now() - 3600000 * 48 },
-    { id: 'BER-11', lat: 52.5, lng: 13.4, intensity: 0.7, location: 'Berlin', region: 'Europe', status: 'defending', latency: '28ms', throughput: '600GB/s', health: 92, label: 'Berlin Sentry', encryption: 'P2P-Layer', discoveredAt: Date.now() - 3600000 * 12 },
-    { id: 'SGP-02', lat: 1.3, lng: 103.8, intensity: 0.0, location: 'Singapore', region: 'Asia', status: 'offline', latency: '--', throughput: '--', health: 0, label: 'SG Hub', encryption: 'None', discoveredAt: Date.now() - 3600000 * 72 },
-    { id: 'PAR-03', lat: 48.8, lng: 2.3, intensity: 0.75, location: 'Paris', region: 'Europe', status: 'cloaked', latency: '31ms', throughput: '720GB/s', health: 95, label: 'Paris Node', encryption: 'P2P-Layer', discoveredAt: Date.now() - 3600000 * 2 },
-    { id: 'SFO-07', lat: 37.7, lng: -122.4, intensity: 0.95, location: 'San Francisco', region: 'North America', status: 'active', latency: '15ms', throughput: '1.1TB/s', health: 99, label: 'SF Node', encryption: 'Quantum-Resistant', discoveredAt: Date.now() - 3600000 * 1 },
+    { id: 'LDN-01', lat: 51.5, lng: -0.1, intensity: 0.8, location: 'London Sector', region: 'Europe', status: 'active', latency: '42ms', throughput: '1.4TB/s', health: 98, label: 'London Node', encryption: 'Quantum-Resistant', discoveredAt: Date.now() - 3600000 * 24 },
+    { id: 'NYC-04', lat: 40.7, lng: -74.0, intensity: 0.9, location: 'New York Grid', region: 'North America', status: 'active', latency: '12ms', throughput: '2.1TB/s', health: 100, label: 'NY Node', encryption: 'Quantum-Resistant', discoveredAt: Date.now() - 3600000 * 5 },
+    { id: 'TKO-09', lat: 35.6, lng: 139.6, intensity: 0.5, location: 'Tokyo Hub', region: 'Asia', status: 'syncing', latency: '158ms', throughput: '540GB/s', health: 65, label: 'Tokyo Node', encryption: 'AES-256', discoveredAt: Date.now() - 3600000 * 48 },
+    { id: 'BER-11', lat: 52.5, lng: 13.4, intensity: 0.7, location: 'Berlin Sentry', region: 'Europe', status: 'defending', latency: '28ms', throughput: '900GB/s', health: 92, label: 'Berlin Sentry', encryption: 'P2P-Layer', discoveredAt: Date.now() - 3600000 * 12 },
+    { id: 'SGP-02', lat: 1.3, lng: 103.8, intensity: 0.0, location: 'Singapore Core', region: 'Asia', status: 'offline', latency: '--', throughput: '--', health: 0, label: 'SG Hub', encryption: 'None', discoveredAt: Date.now() - 3600000 * 72 },
+    { id: 'PAR-03', lat: 48.8, lng: 2.3, intensity: 0.75, location: 'Paris Mesh', region: 'Europe', status: 'cloaked', latency: '31ms', throughput: '820GB/s', health: 95, label: 'Paris Node', encryption: 'P2P-Layer', discoveredAt: Date.now() - 3600000 * 2 },
+    { id: 'SFO-07', lat: 37.7, lng: -122.4, intensity: 0.95, location: 'SF District', region: 'North America', status: 'active', latency: '15ms', throughput: '1.8TB/s', health: 99, label: 'SF Node', encryption: 'Quantum-Resistant', discoveredAt: Date.now() - 3600000 * 1 },
   ], []);
 
   const filteredNodes = nodes.filter(n => 
@@ -197,19 +203,19 @@ const NetworkView: React.FC = () => {
   };
 
   const formatDiscoveryTime = (timestamp?: number) => {
-    if (!timestamp) return 'Unknown Origin';
+    if (!timestamp) return 'Time-Locked Origin';
     const diff = Date.now() - timestamp;
     const hours = Math.floor(diff / 3600000);
-    if (hours < 1) return 'Discovered Just Now';
-    if (hours < 24) return `Discovered ${hours}h ago`;
-    return `Discovered ${Math.floor(hours / 24)}d ago`;
+    if (hours < 1) return 'Integrated Moments Ago';
+    if (hours < 24) return `Integrated ${hours}h ago`;
+    return `Integrated ${Math.floor(hours / 24)}d ago`;
   };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 h-full flex flex-col pb-10">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-white mb-1">Mesh Explorer</h2>
+          <h2 className="text-3xl font-black tracking-tighter text-white mb-1 uppercase">Mesh Explorer v2.6</h2>
           <p className="text-slate-400 text-sm">Real-time tactical overview of sovereign nodes and their encryption postures.</p>
         </div>
         <div className="flex bg-slate-900/60 rounded-2xl p-1.5 glass-panel border-white/5">
@@ -217,7 +223,7 @@ const NetworkView: React.FC = () => {
             onClick={() => setActiveTab('map')}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'map' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
           >
-            <MapIcon size={14} /> Spatial Map
+            <MapIcon size={14} /> Spatial HUD
           </button>
           <button 
             onClick={() => setActiveTab('list')}
@@ -236,7 +242,7 @@ const NetworkView: React.FC = () => {
             type="text" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search city, ID, or encryption tier..." 
+            placeholder="Search city, node ID, or quantum tier..." 
             className="w-full bg-slate-900/40 border border-white/5 rounded-2xl py-3.5 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/30 transition-all placeholder:text-slate-600"
           />
         </div>
@@ -244,7 +250,7 @@ const NetworkView: React.FC = () => {
           onClick={() => setIsGrouped(!isGrouped)}
           className={`flex items-center justify-center gap-2 px-6 py-3.5 glass-panel rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${isGrouped ? 'text-blue-400 border-blue-500/30 bg-blue-500/10' : 'text-slate-400 hover:text-white border-white/5'}`}
         >
-          <Layers size={18} /> {isGrouped ? 'Ungroup Nodes' : 'Regional Groups'}
+          <Layers size={18} /> {isGrouped ? 'Dissolve Hubs' : 'Synthesize Regional Hubs'}
         </button>
       </div>
 
@@ -252,25 +258,31 @@ const NetworkView: React.FC = () => {
         {activeTab === 'map' ? (
           <div className="flex-1 relative bg-black/20">
              <SpatialCanvas isDroneView={false} />
-             <div className="absolute top-6 left-6 flex flex-col gap-4 max-w-[240px] z-10 pointer-events-none">
-                <div className="glass-panel p-5 rounded-3xl border-white/5 bg-slate-950/80 backdrop-blur-3xl animate-in slide-in-from-left-4 duration-500 shadow-2xl">
+             <div className="absolute top-6 left-6 flex flex-col gap-4 max-w-[280px] z-10 pointer-events-none">
+                <div className="glass-panel p-6 rounded-[2rem] border-white/10 bg-slate-950/80 backdrop-blur-3xl animate-in slide-in-from-left-4 duration-500 shadow-2xl">
                     <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1.5 flex items-center gap-2">
-                       <Signal size={12} /> Neural Mesh Uplink
+                       <Signal size={12} /> Neural Mesh 2026.04
                     </p>
                     <h4 className="text-sm font-bold text-white mb-2">
                         {isGrouped ? 'Strategic Hub Analysis' : 'Tactical Node Visualization'}
                     </h4>
                     <p className="text-[10px] text-slate-400 leading-relaxed font-medium">
                         {isGrouped 
-                          ? `Clustering ${nodes.length} nodes by geographic proximity. Network consensus remains stable.`
-                          : `Monitoring individual node health, encryption layers, and peer-to-peer handshakes.`}
+                          ? `Clustering ${nodes.length} nodes by geographic proximity. Network consensus remains stable at 98.4%.`
+                          : `Monitoring individual node health, quantum encryption layers, and biometric handshakes.`}
                     </p>
+                    <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+                       <span className="text-[9px] font-black text-slate-500 uppercase tracking-tighter">Haptic_Sync: OK</span>
+                       <div className="flex gap-1">
+                          {[...Array(3)].map((_, i) => <div key={i} className="w-1 h-3 bg-blue-500/30 rounded-full" />)}
+                       </div>
+                    </div>
                 </div>
              </div>
           </div>
         ) : (
           <div className="flex-1 overflow-auto p-8 custom-scrollbar">
-             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in fade-in duration-300">
+             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 animate-in fade-in duration-300">
                 {filteredNodes.map(node => (
                   <div key={node.id} className="glass-panel p-6 rounded-[2.5rem] hover:bg-slate-900/60 transition-all group relative overflow-hidden border-white/5 shadow-xl hover:shadow-2xl">
                     {node.status === 'defending' && (
@@ -279,7 +291,7 @@ const NetworkView: React.FC = () => {
                     
                     {/* Header: Icon and Status */}
                     <div className="flex items-center justify-between mb-5">
-                      <div className={`p-3.5 rounded-2xl shadow-lg ${
+                      <div className={`p-4 rounded-2xl shadow-lg ${
                         node.status === 'active' ? 'bg-green-500/10 text-green-400 shadow-green-900/10' : 
                         node.status === 'defending' ? 'bg-red-500/10 text-red-400 shadow-red-900/10' :
                         node.status === 'cloaked' ? 'bg-purple-500/10 text-purple-400 shadow-purple-900/10' :
@@ -287,7 +299,7 @@ const NetworkView: React.FC = () => {
                       }`}>
                         {getStatusIcon(node.status)}
                       </div>
-                      <span className={`text-[10px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full border shadow-sm ${getStatusBadge(node.status)}`}>
+                      <span className={`text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full border shadow-sm ${getStatusBadge(node.status)}`}>
                         {node.status}
                       </span>
                     </div>
@@ -299,7 +311,7 @@ const NetworkView: React.FC = () => {
                          {[...Array(4)].map((_, i) => (
                            <div 
                              key={i} 
-                             className={`w-1.5 h-4 rounded-full transition-colors ${i < (node.status === 'active' || node.status === 'defending' ? 4 : node.status === 'syncing' ? 2 : 0) ? 'bg-blue-500' : 'bg-slate-800'}`} 
+                             className={`w-1.5 h-4 rounded-full transition-colors ${i < (node.status === 'active' || node.status === 'defending' ? 4 : node.status === 'syncing' ? 2 : 0) ? 'bg-blue-500 shadow-[0_0_5px_#3b82f6]' : 'bg-slate-800'}`} 
                            />
                          ))}
                       </div>
@@ -319,7 +331,7 @@ const NetworkView: React.FC = () => {
                       </div>
                       <div className="bg-slate-950/40 p-3.5 rounded-2xl border border-white/5 group-hover:bg-slate-950/60 transition-colors">
                         <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                          <Activity size={10} className="text-green-400" /> Integrity
+                          <Activity size={10} className="text-green-400" /> Mesh Integrity
                         </p>
                         <p className="text-sm font-bold text-green-400 font-mono">{node.health}%</p>
                       </div>
@@ -331,18 +343,18 @@ const NetworkView: React.FC = () => {
                       </div>
                       <div className="bg-slate-950/40 p-3.5 rounded-2xl border border-white/5 group-hover:bg-slate-950/60 transition-colors">
                         <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                          <Clock size={10} className="text-slate-400" /> Identity
+                          <Clock size={10} className="text-slate-400" /> Sequence
                         </p>
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">{formatDiscoveryTime(node.discoveredAt)}</p>
                       </div>
                     </div>
 
-                    {/* Latency Visualization Section: Sophisticated Signal HUD */}
+                    {/* Latency Visualization Section: Sophisticated Neural HUD */}
                     <div className="mb-6 p-5 bg-slate-950/60 rounded-[2rem] border border-white/10 shadow-inner group-hover:border-blue-500/20 transition-all">
                       <div className="flex justify-between items-center mb-4">
                         <div className="flex items-center gap-2">
                           <BarChart3 size={14} className="text-blue-400" />
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Neural Link Latency</span>
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Neural Resonance Jitter</span>
                         </div>
                         <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded-md">
                           <Zap size={10} /> {node.latency}
@@ -353,7 +365,7 @@ const NetworkView: React.FC = () => {
                     </div>
 
                     <button className="w-full py-4 bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95 group-hover:shadow-blue-900/20">
-                       Examine Telemetry <ArrowRight size={14} />
+                       Examine Neural Telemetry <ArrowRight size={14} />
                     </button>
                   </div>
                 ))}
