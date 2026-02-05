@@ -85,3 +85,16 @@ We welcome architects, cryptographers, and neural engineers to join the mesh.
 
 **Built for the future of decentralized spatial awareness.**  
 *SovereignMap: Map the world, own the data.*
+![1](https://github.com/user-attachments/assets/48a2fca1-9f73-45af-b54c-39f2c600bc71)
+
+![2](https://github.com/user-attachments/assets/eb0885cc-b9dc-4a20-ac83-aec8e9c97fa1)
+
+![3](https://github.com/user-attachments/assets/e6814b29-d5f3-4527-88cd-eda34f3d1ac3)
+
+![4](https://github.com/user-attachments/assets/cf5496f4-3623-4a77-9131-b34e23423dbb)
+
+![6](https://github.com/user-attachments/assets/d5b95b5e-a06f-4f8f-9236-455d43091659)
+
+![8](https://github.com/user-attachments/assets/90380788-4f17-4174-90fa-9db468e89163)
+
+
