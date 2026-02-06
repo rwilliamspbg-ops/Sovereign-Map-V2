@@ -1,4 +1,4 @@
-# SovereignMap: Neural Mesh
+# Sovereign-Map: Neural Mesh   ***Demo***
 
 ![SovereignMap Header](https://img.shields.io/badge/-Testnet--Ready-blue?style=for-the-badge&logo=google-cloud)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
