@@ -1,28 +1,8 @@
 
--# Sovereign-Map: Neural Mesh   ***Demo***
-+# Sovereign-Map-V2: Neural Mesh   ***Demo***
+Sovereign-Map-V2: Neural Mesh   ***Demo***
 
 ![SovereignMap Header](https://img.shields.io/badge/-Testnet--Ready-blue?style=for-the-badge&logo=google-cloud)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-@@ -72,7 +72,7 @@
-### Setup
-```bash
-# Clone the repository
--git clone https://github.com/rwilliamspbg-ops/Sovereign-Map.git
-+git clone https://github.com/rwilliamspbg-ops/Sovereign-Map-V2.git
-
-# Navigate to directory
-cd Sovereign-Map
-@@ -82,7 +82,7 @@
-
-## 🤝 Contributing
-
-We welcome architects, cryptographers, and neural engineers to join the mesh.
--1. Fork the Project.
-+1. Fork the project.
-2. Create your Feature Branch (`git checkout -b feature/SovereignUpdate`).
-3. Commit your Changes (`git commit -m 'Add some SovereignCapability'`).
-4. Push to the Branch (`git push origin feature/SovereignUpdate`).
 
 
 
