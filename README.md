@@ -1,10 +1,8 @@
+# SovereignMap: Neural Mesh
 
-Sovereign-Map-V2: Neural Mesh   ***Demo***
-
-
+![SovereignMap Header](https://img.shields.io/badge/Status-Mainnet--Ready-blue?style=for-the-badge&logo=google-cloud)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-
-
+![AI-Powered](https://img.shields.io/badge/Intelligence-Gemini--Pro--Neural-indigo?style=for-the-badge)
 
 **SovereignMap** is the backbone of decentralized spatial awareness mapping and digital identity expansion. It is a next-generation protocol designed to facilitate digital sovereign mapping across all devices capable of spatial awareness, transforming raw environmental data into a self-sustaining intelligence mesh.
 
@@ -12,7 +10,7 @@ Sovereign-Map-V2: Neural Mesh   ***Demo***
 
 ## 🌐 Vision
 
-In an era of centralized surveillance, SovereignMap returns spatial intelligence to the edge. By utilizing decentralized mesh networking and ( using Google Gemini's advanced reasoning) until Node Developement, we've created a system where mapping is not just a utility, but a sovereign asset controlled by its operators.
+In an era of centralized surveillance, SovereignMap returns spatial intelligence to the edge. By utilizing decentralized mesh networking and Google Gemini's advanced reasoning, we've created a system where mapping is not just a utility, but a sovereign asset controlled by its operators.
 
 ## 🚀 Key Features
 
@@ -45,7 +43,7 @@ A self-sustaining economic layer that uses AI-driven Network Orchestration (ANO)
 ## 🛠 Tech Stack
 
 - **Framework**: React 19 / TypeScript
-- **AI Orchestration**: Google Gemini SDK (`@google/genai`) to be individual AI Nodes
+- **AI Orchestration**: Google Gemini SDK (`@google/genai`)
   - **Gemini 3 Pro**: High-level security & spatial analysis.
   - **Gemini 3 Flash**: Rapid semantic synthesis and deep threat detection.
   - **Gemini 2.5 Live**: Real-time voice interaction.
@@ -87,16 +85,3 @@ We welcome architects, cryptographers, and neural engineers to join the mesh.
 
 **Built for the future of decentralized spatial awareness.**  
 *SovereignMap: Map the world, own the data.*
-![1](https://github.com/user-attachments/assets/48a2fca1-9f73-45af-b54c-39f2c600bc71)
-
-![2](https://github.com/user-attachments/assets/eb0885cc-b9dc-4a20-ac83-aec8e9c97fa1)
-
-![3](https://github.com/user-attachments/assets/e6814b29-d5f3-4527-88cd-eda34f3d1ac3)
-
-![4](https://github.com/user-attachments/assets/cf5496f4-3623-4a77-9131-b34e23423dbb)
-
-![6](https://github.com/user-attachments/assets/d5b95b5e-a06f-4f8f-9236-455d43091659)
-
-![8](https://github.com/user-attachments/assets/90380788-4f17-4174-90fa-9db468e89163)
-
-
