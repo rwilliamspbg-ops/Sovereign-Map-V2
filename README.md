@@ -10,7 +10,7 @@
 
 ## 🌐 Vision
 
-In an era of centralized surveillance, SovereignMap returns spatial intelligence to the edge. By utilizing decentralized mesh networking and Google Gemini's advanced reasoning, we've created a system where mapping is not just a utility, but a sovereign asset controlled by its operators.
+In an era of centralized surveillance, SovereignMap returns spatial intelligence to the edge. By utilizing decentralized mesh networking and ( using Google Gemini's advanced reasoning) until Node Developement, we've created a system where mapping is not just a utility, but a sovereign asset controlled by its operators.
 
 ## 🚀 Key Features
 
@@ -43,7 +43,7 @@ A self-sustaining economic layer that uses AI-driven Network Orchestration (ANO)
 ## 🛠 Tech Stack
 
 - **Framework**: React 19 / TypeScript
-- **AI Orchestration**: Google Gemini SDK (`@google/genai`)
+- **AI Orchestration**: Google Gemini SDK (`@google/genai`) to be individual AI Nodes
   - **Gemini 3 Pro**: High-level security & spatial analysis.
   - **Gemini 3 Flash**: Rapid semantic synthesis and deep threat detection.
   - **Gemini 2.5 Live**: Real-time voice interaction.
