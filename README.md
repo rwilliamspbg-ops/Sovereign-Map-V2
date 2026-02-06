@@ -1,7 +1,4 @@
-diff --git a/README.md b/README.md
---- a/README.md
-+++ b/README.md
-@@ -1,4 +1,4 @@
+
 -# Sovereign-Map: Neural Mesh   ***Demo***
 +# Sovereign-Map-V2: Neural Mesh   ***Demo***
 
@@ -26,6 +23,8 @@ We welcome architects, cryptographers, and neural engineers to join the mesh.
 2. Create your Feature Branch (`git checkout -b feature/SovereignUpdate`).
 3. Commit your Changes (`git commit -m 'Add some SovereignCapability'`).
 4. Push to the Branch (`git push origin feature/SovereignUpdate`).
+
+
 
 **SovereignMap** is the backbone of decentralized spatial awareness mapping and digital identity expansion. It is a next-generation protocol designed to facilitate digital sovereign mapping across all devices capable of spatial awareness, transforming raw environmental data into a self-sustaining intelligence mesh.
 
