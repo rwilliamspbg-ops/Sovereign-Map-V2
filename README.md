@@ -1,8 +1,6 @@
 # SovereignMap: Neural Mesh
 
-![SovereignMap Header](https://img.shields.io/badge/Status-Mainnet--Ready-blue?style=for-the-badge&logo=google-cloud)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
-![AI-Powered](https://img.shields.io/badge/Intelligence-Gemini--Pro--Neural-indigo?style=for-the-badge)
+
 
 **SovereignMap** is the backbone of decentralized spatial awareness mapping and digital identity expansion. It is a next-generation protocol designed to facilitate digital sovereign mapping across all devices capable of spatial awareness, transforming raw environmental data into a self-sustaining intelligence mesh.
 
